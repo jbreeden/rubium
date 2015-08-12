@@ -1,0 +1,28 @@
+<html>
+<head>
+  <script>
+    rubium.register('ruby-script');
+  </script>
+  <ruby-script>
+    $v8 = Cef::V8
+    $window = $v8.window
+  </ruby-script>
+</head>
+<body>
+  <p id="immediate_result">ERROR immediate script failed</p>
+  <p id="onready_result">ERROR onready script failed</p>
+  <p id="onload_result">ERROR onload script failed</p>
+
+  <ruby-script>
+    $window['immediate_result']['textContent'] = $v8.create_string 'immediate script executed'
+  </ruby-script>
+
+  <ruby-script onready>
+    $window['onready_result']['textContent'] = $v8.create_string 'onread script executed'
+  </ruby-script>
+
+  <ruby-script onload>
+    $window['onload_result']['textContent'] = $v8.create_string 'onload script executed'
+  </ruby-script>
+</body>
+</html>

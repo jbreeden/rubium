@@ -1,0 +1,16 @@
+sudo apt-get install ruby rake git cmake libgtkglextmm-x11-1.2-dev libudev1 clang bison
+sudo ln -s /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
+mkdir apr
+cd apr
+wget http://apache.arvixe.com//apr/apr-1.5.2.tar.gz
+tar xfz apr-1.5.2.tar.gz
+cd apr-1.5.2
+./configure
+make
+sudo make install
+git clone http://github.com/jbreeden/rubium
+git submodule init
+git submodule update
+rake cef:cefclient
+rake mruby:build
+rake package
