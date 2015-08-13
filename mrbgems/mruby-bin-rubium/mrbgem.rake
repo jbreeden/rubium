@@ -27,7 +27,7 @@ MRuby::Gem::Specification.new('mruby-bin-rubium') do |spec|
 
   if OS.mac?
     spec.bins << "rubium Helper"
-    
+
     FileUtils.rm_rf("#{RubiumBinGem.dir}/tools/rubium Helper") if Dir.exists?("#{RubiumBinGem.dir}/tools/rubium Helper")
     FileUtils.mkdir_p("#{RubiumBinGem.dir}/tools/rubium Helper")
 
@@ -47,8 +47,10 @@ MRuby::Gem::Specification.new('mruby-bin-rubium') do |spec|
   elsif OS.linux?
     FileUtils.cp "#{RubiumBinGem.dir}/platform-bins/lin/rubium.cpp", "#{RubiumBinGem.dir}/tools/rubium"
     spec.linker.flags << '-Wl,-rpath,\'$ORIGIN\''
+    spec.linker.library_paths << "#{ENV['CEF_HOME']}/#{configuration}"
     spec.linker.libraries << 'X11'
-    (spec.linker.flags_after_libraries = []) << "#{ENV['CEF_HOME']}/build/libcef_dll/#{configuration}/libcef_dll_wrapper.a"
+    spec.linker.libraries << 'cef'
+    (spec.linker.flags_after_libraries = []) << "#{ENV['CEF_HOME']}/build/libcef_dll/libcef_dll_wrapper.a"
   elsif OS.windows?
     FileUtils.cp "#{RubiumBinGem.dir}/platform-bins/win/rubium.cpp", "#{RubiumBinGem.dir}/tools/rubium"
     spec.linker.libraries << "User32"

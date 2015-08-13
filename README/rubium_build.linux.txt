@@ -11,6 +11,9 @@ sudo make install
 git clone http://github.com/jbreeden/rubium
 git submodule init
 git submodule update
+cd rubium
+mkdir cef_distros
+# Download CEF binary distribution cef_binary_3.2171.1979_linux64 and extract to ./cef_distros/cef_binary_3.2171.1979_linux64
 rake cef:cefclient
 rake mruby:build
 rake package

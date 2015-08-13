@@ -33,7 +33,7 @@ if OS.mac?
     end
   end
 elsif OS.linux?
-  def build_cef_target(target)
+  def build_cef_target(target, configuration)
     mkdir CEF.build_dir unless Dir.exists?(CEF.build_dir)
     cd CEF.build_dir do
       sh("cmake -DPROJECT_ARCH=\"x86_64\" #{CEF.dir} -DCONFIGURATION=#{configuration}")
@@ -41,7 +41,7 @@ elsif OS.linux?
     end
   end
 else
-  def build_cef_target(target)
+  def build_cef_target(target, configuration)
     raise "Not defined for this platform"
   end
 end
