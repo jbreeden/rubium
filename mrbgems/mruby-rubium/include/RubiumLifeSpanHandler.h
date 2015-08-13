@@ -17,7 +17,7 @@ public:
    virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) OVERRIDE;
    virtual bool DoClose(CefRefPtr<CefBrowser> browser) OVERRIDE;
    virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser) OVERRIDE;
-   
+
    // Request that all existing browser windows close.
    void CloseAllBrowsers(bool force_close);
 

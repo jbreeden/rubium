@@ -14,7 +14,6 @@
 #include "mruby_rubium.h"
 #include "RubiumLifeSpanHandler.h"
 #include "RubiumLoadHandler.h"
-#include "rubium_opt.h"
 
 using namespace std;
 

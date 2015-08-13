@@ -36,10 +36,8 @@
 
 /* Rubium Includes */
 #include "mruby_rubium.h"
-#include "rubium_util.h"
 #include "RubiumHandler.h"
 #include "RubiumApp.h"
-#include "rubium_opt.h"
 
 using namespace std;
 
@@ -197,9 +195,6 @@ int rubium_main()
    apr_initialize();
    mrb_state* mrb = mrb_open();
    set_mrb_for_thread(mrb);
-   if (mrb->exc) {
-      LAMINA_LOG("!!! Error !!! " << mrb_str_to_cstr(mrb, mrb_funcall(mrb, mrb_obj_value(mrb->exc), "to_s", 0)));
-   }
 
    void* sandbox_info = NULL;
 
@@ -219,26 +214,22 @@ int rubium_main()
 
   // SimpleApp implements application-level callbacks. It will create the first
   // browser instance in OnContextInitialized() after CEF has initialized.
-  //  LAMINA_LOG("Rubium.start_cef_proc: Creating App");
+  //  LAMINA_LOG("rubium_main: Creating App");
   CefRefPtr<RubiumApp> app(new RubiumApp);
 
   // CEF applications have multiple sub-processes (render, plugin, GPU, etc)
   // that share the same executable. This function checks the command-line and,
   // if this is a sub-process, executes the appropriate logic.
 
-  //  LAMINA_LOG("Rubium.start_cef_proc: Executing CEF Process");
-  apr_pool_t* pool;
-  apr_pool_create(&pool, NULL);
-  apr_env_set("CEF_SUBPROC", "true", pool);
-  apr_pool_destroy(pool);
+  //  LAMINA_LOG("rubium_main: Executing CEF Process");
   int exit_code = CefExecuteProcess(main_args, app.get(), sandbox_info);
   if (exit_code >= 0) {
-    // LAMINA_LOG("Rubium.start_cef_proc: Subprocess exited");
+    // LAMINA_LOG("rubium_main: Subprocess exited");
     // The sub-process has completed so return here.
     return exit_code;
   }
 
-  //  LAMINA_LOG("Rubium.start_cef_proc: This is a CEF browser process");
+  //  LAMINA_LOG("rubium_main: This is a CEF browser process");
 
   // Specify CEF global settings here.
   CefSettings settings;
@@ -247,11 +238,6 @@ int rubium_main()
   //settings.log_severity = LOGSEVERITY_DISABLE;
 #endif
 
-  //  LAMINA_LOG("Rubium.start_cef_proc: Getting the cache path");
-  //  string cache_path = rubium_opt_cache_path();
-  //  if (cache_path.size() > 0) {
-  //     CefString(&settings.cache_path).FromASCII(cache_path.c_str());
-  //  }
   if (g_command_line->HasSwitch("cache-path")) {
     CefString(&settings.cache_path) = g_command_line->GetSwitchValue("cache-path");
   }
@@ -267,13 +253,13 @@ int rubium_main()
   XSetIOErrorHandler(XIOErrorHandlerImpl);
 #endif
 
-  // LAMINA_LOG("Rubium.start_cef_proc: Initializing CEF");
+  LAMINA_LOG("rubium_main: Initializing CEF");
   CefInitialize(main_args, settings, app.get(), sandbox_info);
 
-  // LAMINA_LOG("Rubium.start_cef_proc: Running the message loop");
+  LAMINA_LOG("rubium_main: Running the message loop");
   CefRunMessageLoop();
 
-  // LAMINA_LOG("Rubium.start_cef_proc: Shutting down CEF");
+  LAMINA_LOG("rubium_main: Shutting down CEF");
   CefShutdown();
 
   return 0;

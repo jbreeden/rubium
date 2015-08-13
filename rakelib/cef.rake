@@ -19,23 +19,24 @@ end
 namespace :cef do
   desc "Build cefclient"
   task :cefclient do
-    build_cef_target('cefclient')
+    configuration = ENV['CONFIGURATION'] || 'Release'
+    build_cef_target('cefclient', configuration)
   end
 end
 
 if OS.mac?
-  def build_cef_target(target)
+  def build_cef_target(target, configuration)
     mkdir CEF.build_dir unless Dir.exists?(CEF.build_dir)
     cd CEF.build_dir do
       sh("cmake -G \"Xcode\" -DPROJECT_ARCH=\"x86_64\" #{CEF.dir}")
-      sh("xcodebuild -project cef.xcodeproj -target #{target} -configuration Release")
+      sh("xcodebuild -project cef.xcodeproj -target #{target} -configuration #{configuration}")
     end
   end
 elsif OS.linux?
   def build_cef_target(target)
     mkdir CEF.build_dir unless Dir.exists?(CEF.build_dir)
     cd CEF.build_dir do
-      sh("cmake -DPROJECT_ARCH=\"x86_64\" #{CEF.dir}")
+      sh("cmake -DPROJECT_ARCH=\"x86_64\" #{CEF.dir} -DCONFIGURATION=#{configuration}")
       sh("make")
     end
   end

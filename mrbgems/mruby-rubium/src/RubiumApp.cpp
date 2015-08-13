@@ -3,7 +3,6 @@
 #include <cstring>
 #include "RubiumRenderProcessHandler.h"
 #include "RubiumApp.h"
-#include "rubium_opt.h"
 
 #ifdef _WIN32
   #include <direct.h>

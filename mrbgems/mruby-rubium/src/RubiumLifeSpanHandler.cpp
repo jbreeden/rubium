@@ -1,8 +1,7 @@
+#include <iostream>
 #include "mruby_rubium.h"
 #include "RubiumLifeSpanHandler.h"
-#include "rubium_opt.h"
 #include <vector>
-/*#include <regex>*/
 #if defined(_WIN32) || defined(_WIN64)
   #include "Windows.h"
 #endif
@@ -63,6 +62,7 @@ RubiumLifeSpanHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
 bool
 RubiumLifeSpanHandler::DoClose(CefRefPtr<CefBrowser> browser) {
    CEF_REQUIRE_UI_THREAD();
+   LAMINA_LOG("DoClose");
 
    // Closing the main window requires special handling. See the DoClose()
    // documentation in the CEF header for a detailed destription of this
@@ -80,6 +80,7 @@ RubiumLifeSpanHandler::DoClose(CefRefPtr<CefBrowser> browser) {
 void
 RubiumLifeSpanHandler::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
    CEF_REQUIRE_UI_THREAD();
+   LAMINA_LOG("OnBeforeClose");
 
    // Remove from the list of existing browsers.
    BrowserList::iterator bit = browser_list_.begin();
@@ -92,12 +93,14 @@ RubiumLifeSpanHandler::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
 
    if (browser_list_.empty()) {
       // All browser windows have closed. Quit the application message loop.
+      LAMINA_LOG("OnBeforeClose: Quitting message loop (last browser closed)");
       CefQuitMessageLoop();
    }
 }
 
 void
 RubiumLifeSpanHandler::CloseAllBrowsers(bool force_close) {
+  LAMINA_LOG("CloseAllBrowsers");
    if (!CefCurrentlyOn(TID_UI)) {
       // Execute on the UI thread.
       CefPostTask(TID_UI,
