@@ -1,3 +1,5 @@
 rubium.app
 cef_distros/*
 mrbgems/mruby-bin-rubium/tools/
+cache
+.DS_STORE
