@@ -364,8 +364,10 @@ mrb_cef_v8_js_object_set_property(mrb_state* mrb, mrb_value self) {
 
    CefString key(
       mrb_str_to_cstr(
-      mrb,
-      mrb_funcall(mrb, key_param, "to_s", 0)));
+        mrb,
+        mrb_funcall(mrb, key_param, "to_s", 0)
+      )
+    );
 
    jsObjPtr->SetValue(key, jsValuePtr, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
    return self;
@@ -405,11 +407,14 @@ mrb_cef_v8_js_object_apply(mrb_state* mrb, mrb_value self) {
    CefV8ValueList js_args;
    for (int i = 0; i < argc; ++i) {
       js_args.push_back(
-         mrb_cef_v8_value_unwrap(mrb, *(args + i))
-         );
+        // TODO: May not be a JsObject. Need error checking
+        mrb_cef_v8_value_unwrap(mrb, *(args + i))
+      );
    }
 
    CefRefPtr<CefV8Value> js_context = mrb_cef_v8_value_unwrap(mrb, context);
+
+   // TODO: May not be a function. Need error checking
    CefRefPtr<CefV8Value> js_fn = mrb_cef_v8_value_unwrap(mrb, self);
 
    if (mrb_test(block)) {

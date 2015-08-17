@@ -11,7 +11,7 @@ MRubyV8Handler::MRubyV8Handler(mrb_state* mrb, string name, mrb_value block) {
    this->block = block;
 }
 
-bool 
+bool
 MRubyV8Handler::Execute(const CefString& name,
    CefRefPtr<CefV8Value> object,
    const CefV8ValueList& arguments,
@@ -19,14 +19,12 @@ MRubyV8Handler::Execute(const CefString& name,
    CefString& exception) {
 
    if (name == this->name) {
-      
-      
       mrb_value rb_args = mrb_ary_new_capa(mrb, 5);
 
       for (auto it = arguments.begin(); it != arguments.end(); ++it) {
          mrb_ary_push(mrb, rb_args, mrb_cef_v8_value_wrap(mrb, *it));
       }
-      
+
       mrb_value ret;
       const char* return_class = NULL;
 
@@ -41,7 +39,7 @@ MRubyV8Handler::Execute(const CefString& name,
       }
 
       if (mrb->exc) {
-         exception = mrb_str_to_cstr(mrb, mrb_funcall(mrb, ret, "to_s", 0));
+         exception = mrb_str_to_cstr(mrb, mrb_funcall(mrb, mrb_obj_value(mrb->exc), "to_s", 0));
          mrb->exc = NULL;
       }
       else {

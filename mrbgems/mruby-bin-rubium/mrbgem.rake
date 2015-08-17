@@ -43,6 +43,8 @@ MRuby::Gem::Specification.new('mruby-bin-rubium') do |spec|
     spec.linker.flags << "-F#{ENV['CEF_HOME']}/#{configuration}"
     spec.linker.flags << "-framework \"Chromium Embedded Framework\""
     spec.linker.flags << '-framework Cocoa'
+    # Make sure install_name_tool will have enough space to alter the paths of the dynamic libraries
+    spec.linker.flags << '-headerpad_max_install_names'
     (spec.linker.flags_after_libraries = []) << "#{ENV['CEF_HOME']}/build/libcef_dll/#{configuration}/libcef_dll_wrapper.a"
   elsif OS.linux?
     FileUtils.cp "#{RubiumBinGem.dir}/platform-bins/lin/rubium.cpp", "#{RubiumBinGem.dir}/tools/rubium"
