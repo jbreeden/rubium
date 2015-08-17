@@ -15,4 +15,12 @@ class MrubyEditor
       replace("File not found: #{path}")
     end
   end
+
+  def sh(cmd, mode = :insert)
+    if mode == :replace
+      replace "`#{cmd}`\n#{`#{cmd}`}"
+    else
+      insert "`#{cmd}`\n#{`#{cmd}`}"
+    end
+  end
 end

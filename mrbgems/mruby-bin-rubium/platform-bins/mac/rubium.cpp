@@ -31,6 +31,10 @@
 
 - (void)sendEvent:(NSEvent*)event {
   if ([event type] == NSKeyDown) {
+    // Note: Brackets checks [self mainWindow] firstResponder] == [self mainWindow]
+    //       as well. This seems to stop all undo events for rubium. Need to
+    //       investigate, as the current solution prevents intercepting the events
+    //       in JavaScript
     if ([event modifierFlags] & NSCommandKeyMask) {
       // There is no edit menu, so handle these shortcuts manually
       SEL theSelector = nil;
