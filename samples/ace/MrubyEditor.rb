@@ -1,14 +1,26 @@
 class MrubyEditor
   def initialize(aceEditor, commandLine = nil)
-    @aceEditor = aceEditor
-    @document = @aceEditor.getSession.doc
+    @ace = aceEditor
+    @document = @ace.getSession.doc
     @commandLine = commandLine
-    register_commands
+    bind_event_handlers
+    if File.exists?("./MrubyEditorCommands.rb")
+      self.instance_eval(File.read("./MrubyEditorCommands.rb"))
+    end
   end
 
-  # Syntax sugar, used in register_commands
-  def command(name, chord, &block)
+  # Syntax sugar for adding commands
+  # Also creates a method on the MrubyEditor class
+  # to invoke the command.
+  def command(name, chord = nil, &block)
+    # Add the command as a method
+    self.singleton_class.instance_eval do
+      define_method name do
+        block[]
+      end
+    end
 
+    # Add the command to the aceEditor (mostly for keybindings)
     commands.addCommand({
         name: name,
         bindKey: chord,
@@ -16,96 +28,15 @@ class MrubyEditor
     })
   end
 
-  # Handles mutliple cursors
-  def cursor_command(name, chord, &block)
-    commands.addCommand({
-        name: name,
-        bindKey: chord,
-        exec: JS.function do
-          if @aceEditor.selection.rangeCount.int_value > 1
-            @aceEditor.forEachSelection({ exec: JS.function(&block) })
-          else
-            block[]
-          end
-        end
-    })
-  end
-
-  def register_commands
-    cursor_command 'navigateUp', 'Ctrl-P' do
-      @aceEditor.navigateUp(1)
-    end
-
-    cursor_command 'selectUp', 'Ctrl-Shift-P' do
-      @aceEditor.selection.selectUp(1)
-    end
-
-    cursor_command 'navigateDown', 'Ctrl-N' do
-      @aceEditor.navigateDown(1)
-    end
-
-    cursor_command 'selectDown', 'Ctrl-Shift-N' do
-      @aceEditor.selection.selectDown(1)
-    end
-
-    cursor_command 'navigateLeft', 'Ctrl-B' do
-      @aceEditor.navigateLeft(1)
-    end
-
-    cursor_command 'selectLeft', 'Ctrl-Shift-B' do
-      @aceEditor.selection.selectLeft(1)
-    end
-
-    cursor_command 'navigateRight', 'Ctrl-F' do
-      @aceEditor.navigateRight(1)
-    end
-
-    cursor_command 'selectRight', 'Ctrl-Shift-F' do
-      @aceEditor.selection.selectRight(1)
-    end
-
-    cursor_command 'navigateLineStart', 'Ctrl-A' do
-      @aceEditor.navigateLineStart
-    end
-
-    cursor_command 'selectLineStart', 'Ctrl-Shift-A' do
-      @aceEditor.selection.selectLineStart
-    end
-
-    cursor_command 'navigateLineEnd', 'Ctrl-E' do
-      @aceEditor.navigateLineEnd
-    end
-
-    cursor_command 'selectLineEnd', 'Ctrl-Shift-E' do
-      @aceEditor.selection.selectLineEnd
-    end
-
-    cursor_command 'splitIntoLines', 'Ctrl-Shift-L' do
-      @aceEditor.selection.splitIntoLines
-    end
-
-    command 'undo', 'Ctrl-Z' do
-      @aceEditor.undo
-    end
-
-    command 'redo', 'Ctrl-Shift-Z' do
-      @aceEditor.redo
-    end
-
+  def bind_event_handlers
     if @commandLine
-      @aceEditor.container.addEventListener "keyup" do |e|
-        if e.keyCode.int_value == 27 # Escape
-          e.stopPropagation
-          e.preventDefault
-          @aceEditor.blur
-          @commandLine.focus
-        end
+      command 'gotoCommandLine', 'Ctrl-Tab' do
+        @commandLine.focus
       end
 
-      @commandLine.addEventListener 'keyup' do |e|
-        if e.keyCode.int_value == 27 # Escape
-          @commandLine.blur
-          @aceEditor.focus
+      @commandLine.addEventListener 'keydown' do |e|
+        if e.ctrlKey.bool_value && e.keyCode.int_value == "\t".ord # Tab
+          @ace.focus
         end
       end
 
@@ -114,52 +45,59 @@ class MrubyEditor
           e.preventDefault
           e.stopPropagation
           self.instance_eval(@commandLine.textContent.to_s)
-          @commandLine.blur
-          @aceEditor.focus
+          if e.ctrlKey.bool_value
+            @ace.focus
+          end
         end
       end
     end
   end
 
-  def text_in_range(range)
-    @document.getTextRange(range).to_s
-  end
-
-  def each_selected_range(&block)
-    if multiple_cursors?
-      @aceEditor.selection.getAllRanges.forEach(&block)
-    else
-      cursor = @aceEditor.selection.getCursor
-      range = @aceEditor.selection.getRange
-      range[:cursor] = cursor
-      block[range]
-    end
-  end
-
   def multiple_cursors?
-    @aceEditor.selection.ranges.length.int_value != 0
+    @ace.selection.ranges.length.int_value != 0
   end
 
   def selection?
-    each_selected_range do |range|
+    each_range do |range|
       return true unless range.isEmpty.bool_value
     end
     return false
   end
 
+  def get_text_range(range)
+    @document.getTextRange(range).to_s
+  end
+
+  def each_cursor(&block)
+    @ace.forEachSelection({ exec: JS.function(&block) })
+  end
+
+  def each_range(&block)
+    if multiple_cursors?
+      @ace.selection.getAllRanges.forEach(&block)
+    else
+      cursor = @ace.selection.getCursor
+      range = @ace.selection.getRange
+      # With getAllRanges, each range has a cursor reference.
+      # This normalizes the single range case so that all calls are the same.
+      range[:cursor] = cursor
+      block[range]
+    end
+  end
+
   def eval
     results = {}
 
-    @aceEditor.forEachSelection({ exec: JS.function do |editor|
-      if editor.selection.getRange.isEmpty.bool_value
-        @aceEditor.navigateLineStart
-        @aceEditor.selection.selectLineEnd
+    each_cursor do
+      if @ace.selection.getRange.isEmpty.bool_value
+        @ace.navigateLineStart
+        @ace.selection.selectLineEnd
       end
-    end })
+    end
 
-    each_selected_range do |range|
+    each_range do |range|
       begin
-        results[range.end.row.int_value] = Kernel.eval(text_in_range(range)).to_s
+        results[range.end.row.int_value] = Kernel.eval(get_text_range(range)).to_s
       rescue Exception => ex
         err = ex.inspect.to_s
         JS.console.warn(err)
@@ -171,6 +109,6 @@ class MrubyEditor
   end
 
   def method_missing(name, *args, &block)
-    @aceEditor.send(name, *args, &block)
+    @ace.send(name, *args, &block)
   end
 end
