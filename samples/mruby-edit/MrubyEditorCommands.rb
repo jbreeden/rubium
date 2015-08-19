@@ -1,5 +1,5 @@
 command 'navigateUp', 'Ctrl-P' do
-  each_cursor { each_cursor { @ace.navigateUp(1) } }
+  each_cursor {  @ace.navigateUp(1) }
 end
 
 command 'selectUp', 'Ctrl-Shift-P' do
@@ -51,7 +51,7 @@ command 'selectLineEnd', 'Ctrl-Shift-E' do
 end
 
 command 'splitIntoLines', 'Ctrl-Shift-L' do
-  each_cursor { @ace.selection.splitIntoLines }
+  @ace.selection.splitIntoLines
 end
 
 command 'undo', 'Ctrl-Z' do
@@ -60,4 +60,32 @@ end
 
 command 'redo', 'Ctrl-Shift-Z' do
   @ace.redo
+end
+
+command 'sort' do
+  contents = []
+  each_range do |range|
+    contents.push(get_text_range(range))
+  end
+
+  contents.sort!
+
+  i = 0
+  each_range_in_order do |range|
+    @document.replace(range, contents[i])
+    i += 1
+  end
+end
+
+command 'shuffle' do
+  contents = []
+  each_range do |range|
+    contents.push(get_text_range(range))
+  end
+  contents.shuffle!
+  i = 0
+  each_range_in_order do |range|
+    @document.replace(range, contents[i])
+    i += 1
+  end
 end

@@ -16,7 +16,7 @@ class MrubyEditor
       mode: "ace/mode/ruby",
       tabSize: 2,
       useSoftTabs: true
-    });
+    })
 
     bind_event_handlers
     if File.exists?("./MrubyEditorCommands.rb")
@@ -161,6 +161,9 @@ class MrubyEditor
   end
 
   def each_range(&block)
+    unless block
+      return enum_for(:each_range)
+    end
     if multiple_cursors?
       @ace.selection.getAllRanges.forEach(&block)
     else
@@ -171,6 +174,14 @@ class MrubyEditor
       range[:cursor] = cursor
       block[range]
     end
+  end
+
+  def each_range_in_order(&block)
+    ranges = []
+    each_range do |r|
+      ranges.push(r)
+    end
+    ranges.sort_by { |r| [r.start.row.int_value, r.start.column.int_value] }.each(&block)
   end
 
   def eval
