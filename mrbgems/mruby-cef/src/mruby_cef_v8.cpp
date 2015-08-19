@@ -198,7 +198,6 @@ mrb_cef_v8_eval(mrb_state* mrb, mrb_value self) {
    else if (exc.get() && mrb_test(block)) {
       rb_return_value = mrb_funcall(mrb, block, "call", 1, mrb_cef_v8_exception_wrap(mrb, exc));
    }
-
    return rb_return_value;
 }
 

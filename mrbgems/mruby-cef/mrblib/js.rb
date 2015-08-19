@@ -40,6 +40,7 @@ module JS
   end
 
   def self.function(&block)
+    raise "Must supply a block to JS.function" unless block
     JS.create_function("anonymous") do |args|
       JS.arguments = args
       block[*args]
@@ -95,7 +96,10 @@ class JS::JsObject
           block[*args]
         end
         args.push(func)
-        self[name].apply(self, args)
+        self[name].apply(self, args) do |exc|
+          $stderr.puts "WARNING: JavaScript function threw #{exc.message}"
+          raise exc.message
+        end
       end
     # No arguments, just return the field (may be undefined, just as in JS)
     elsif args.length == 0

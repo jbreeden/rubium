@@ -29,9 +29,7 @@ MRubyV8Handler::Execute(const CefString& name,
       const char* return_class = NULL;
 
       if (this->block.tt == MRB_TT_PROC) {
-         // Hack, or standard practice? Need to talk to mruby guys
-         // (This prevents any exceptions from throwing all the way up to
-         //  the mrb_load_file call that starts rubium. See mruby/vm.c mrb_funcall_with_block)
+         // TODO: Mruby has implemented mrb_protect, at long last. Need to port this.
          auto prev_jmp = mrb->jmp;
          mrb->jmp = NULL;
          ret = mrb_funcall(this->mrb, this->block, "call", 1, rb_args);
