@@ -1,0 +1,11 @@
+- Q: Why do some exceptions crash the render process?
+  + A: If javascript throws through the C API, you MUST handle the exception
+       via ClearException (see mrb_cef_v8_js_object_apply) or stop executing code
+       until JavaScript gets control back and handles the exception. This was handled
+       in the low-level api by passing a block to apply as an exception handler.
+       The method_missing API wasn't doing this, and would go on to execute more
+       JavaScript. The exception not being cleared, context->Eval would fail & crash.
+       This has been rectified. The method_missing API now rethrows any exceptions
+       (well, throws their message anyway) in ruby land. If ruby doesn't catch this,
+       it will be re-thrown in JavaScript once the V8 handler catches the ruby
+       exception.

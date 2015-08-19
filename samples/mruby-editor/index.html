@@ -16,6 +16,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    align-items: stretch;
   }
 
   #editor {
@@ -24,9 +25,7 @@
   }
 
   #command-line {
-    /*height: 2em;*/
     padding: 6px;
-    width: 100%;
     background-color: rgba(0, 0, 0, 0.1);
     border-style: solid;
     border-width: 1px;
@@ -45,87 +44,11 @@
 </div>
 <script src="js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
-  ruby('load "./MrubyEditor.rb"');
-  ruby('load "./MrubyEditorExt.rb"');
+  ruby('load "./MrubyEditor.rb" \n\
+        load "./MrubyEditorExt.rb"');
   window.commandLine = document.getElementById('command-line');
   window.editor = ace.edit("editor");
-  MrubyEditor(editor);
-  var editorStyle = getComputedStyle(editor.container);
-  commandLine.style.fontFamily = editorStyle.fontFamily;
-  commandLine.style.fontSize = editorStyle.fontSize;
-
-  if (localStorage.script) {
-    editor.setValue(localStorage.script);
-  }
-
-  function MrubyEditor(aceEditor) {
-    // Create the MrubyEditor in ruby land, using the ruby function
-    // to pass local variables.
-    ruby.aceEditor = aceEditor;
-    ruby.commandLine = commandLine;
-    // Using `JS.ruby` would have called the function with no arguments.
-    // Instead, use the hash syntax to get the function object.
-    ruby('$editor = MrubyEditor.new(JS[:ruby].aceEditor, JS[:ruby].commandLine); nil');
-
-    userState = {};
-    var aceSession = aceEditor.getSession();
-    var aceDocument = aceSession.doc;
-
-    function saveUserState() {
-      userState.scrollTop = aceSession.getScrollTop();
-      var script = aceEditor.getValue();
-      localStorage.script = script;
-    }
-
-    function restorUserState() {
-      aceSession.setScrollTop(userState.scrollTop);
-    }
-
-    function maintainUserState(callback) {
-      saveUserState();
-      callback();
-      restorUserState();
-    }
-
-    aceSession.setOptions({
-      mode: "ace/mode/ruby",
-      tabSize: 2,
-      useSoftTabs: true
-    });
-
-    aceEditor.commands.addCommand({
-      name: "runSelections",
-      bindKey: "Ctrl-R",
-      exec: function () {
-        maintainUserState(function () {
-          ruby('$editor.eval');
-        });
-      }
-    });
-
-    aceEditor.commands.addCommand({
-      name: "runSelectionsAndPrint",
-      bindKey: "Ctrl-Shift-R",
-      exec: function () {
-        maintainUserState(function () {
-          results = ruby('$editor.eval');
-          var lines = aceDocument.getAllLines();
-          var adjustment = 1;
-          Object.keys(results).forEach(function (row) {
-            row_num = parseInt(row);
-            result = results[row];
-            if (!result) return;
-            result = result.toString().replace(/\r\n|\r/g, "\n");
-            lines = result.split("\n");
-            aceDocument.insertFullLines(row_num + adjustment, lines);
-            adjustment += lines.length;
-          });
-        });
-      }
-    });
-
-    return aceEditor;
-  }
+  MrubyEditor(editor, commandLine);
 </script>
 </body>
 </html>
