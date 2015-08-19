@@ -78,6 +78,13 @@ command 'align' do
   end
 end
 
+command 'dup' do
+  each_range do |range|
+    text = get_text_range(range)
+    @document.insertFullLines(range.end.row.int_value + 1, text.split("\n"))
+  end
+end
+
 command 'sort' do
   contents = []
   each_range do |range|
