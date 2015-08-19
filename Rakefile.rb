@@ -48,35 +48,21 @@ namespace :mruby do
   end
 end
 
-## Defunct
-# namespace :install do
-#   desc "Installs to C:\\opt\\rubium"
-#   task :win => 'binaries:win' do
-#     mkdir '/opt/rubium' unless Dir.exists? '/opt/rubium'
-#     Dir["../binaries-win/*"].each do |f|
-#       cp_r f, "/opt/rubium"
-#     end
-#   end
-#
-#   desc "Installs to /opt/rubium"
-#   task :lin64 => 'binaries:lin64' do
-#     mkdir '/opt/rubium' unless Dir.exists? '/opt/rubium'
-#     Dir["../binaries-lin64/*"].each do |f|
-#       cp_r f, "/opt/rubium"
-#     end
-#   end
-# end
+task :binstubs do
+  if OS.mac?
+  rubium = <<EOS
+#! /usr/bin/env ruby
+spawn "#{File.expand_path('.')}/rubium.app/Contents/MacOS/rubium", *ARGV
+EOS
+  elsif OS.linux?
+    rubium = <<EOS
+#! /usr/bin/env ruby
+spawn "#{File.expand_path('.')}/rubium/rubium", *ARGV
+EOS
+  end
 
-## Defunct
-# desc "Update docs for all component repos"
-# task :docs do
-#     repo_dir = File.expand_path(Dir.pwd)
-#     in_each_repo do
-#       next unless File.exists? 'MDDOC.rb'
-#       puts
-#       puts '---'
-#       puts "md-doc: #{File.expand_path Dir.pwd}"
-#       puts '---'
-#       sh "ruby #{repo_dir}/md-doc.rb"
-#     end
-# end
+  File.open("/usr/local/bin/rubium", 'w') do |stub|
+    stub.write(rubium)
+    stub.chmod(0755)
+  end
+end
