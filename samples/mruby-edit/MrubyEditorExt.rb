@@ -1,3 +1,6 @@
+# This file contains MrubyEditor commands that need arguments.
+# Essentially, they must be run in the editor's command line.
+
 class MrubyEditor
   def ofile(path)
     if File.exists?(path)

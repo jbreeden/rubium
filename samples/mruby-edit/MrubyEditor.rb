@@ -2,7 +2,7 @@ JS.window[:MrubyEditor] = JS.function do |aceEditor, commandLine|
   unless aceEditor && commandLine
     raise "MrubyEditor expects two arguments - an ace editor, and a div with editable content for the command line"
   end
-  MrubyEditor.new(aceEditor, commandLine)
+  $ed = MrubyEditor.new(aceEditor, commandLine)
 end
 
 class MrubyEditor
@@ -26,6 +26,8 @@ class MrubyEditor
 
     use_editor_font_in_command_line
     restore_editor_state
+
+    @ace.focus
   end
 
   def use_editor_font_in_command_line
@@ -72,7 +74,8 @@ class MrubyEditor
   # Also creates a method on the MrubyEditor class
   # to invoke the command.
   def command(name, chord = nil, &block)
-    # Add the command as a method
+    # Add the command as a method for quick command line use.
+    # Recall the command line text is eval'ed in the context of the editor.
     self.singleton_class.instance_eval do
       define_method name do
         block[]
