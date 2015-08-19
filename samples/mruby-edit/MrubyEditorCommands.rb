@@ -62,6 +62,22 @@ command 'redo', 'Ctrl-Shift-Z' do
   @ace.redo
 end
 
+command 'align' do
+  max_col = 0
+  each_cursor do
+    cursor = @ace.selection.getCursor
+    col = cursor.column.int_value
+    max_col = (max_col > col ? max_col : col)
+  end
+  each_cursor do
+    cursor = @ace.selection.getCursor
+    col = cursor.column.int_value
+    if col < max_col
+      @document.insert cursor, (' ' * (max_col - col))
+    end
+  end
+end
+
 command 'sort' do
   contents = []
   each_range do |range|
