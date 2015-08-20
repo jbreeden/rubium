@@ -44,8 +44,7 @@
 </div>
 <script src="js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
-  ruby('load "./MrubyEditor.rb" \n\
-        load "./MrubyEditorExt.rb"');
+  ruby('load "./MrubyEditor.rb"');
   window.commandLine = document.getElementById('command-line');
   window.editor = ace.edit("editor");
   MrubyEditor(editor, commandLine);

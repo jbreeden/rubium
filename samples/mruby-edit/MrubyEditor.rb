@@ -7,12 +7,12 @@ end
 
 class MrubyEditor
   def initialize(aceEditor, commandLine)
-    @ace = aceEditor
-    @session = @ace.getSession
+    @editor = aceEditor
+    @session = @editor.getSession
     @document = @session.doc
     @commandLine = commandLine
 
-    @ace.setOptions({
+    @editor.setOptions({
       mode: "ace/mode/ruby",
       tabSize: 2,
       useSoftTabs: true
@@ -21,29 +21,38 @@ class MrubyEditor
     bind_event_handlers
     if File.exists?("./MrubyEditorCommands.rb")
       self.instance_eval(File.read("./MrubyEditorCommands.rb"))
+    else
+      raise "Could not find ./MrubyEditorCommands.rb"
+    end
+    if File.exists?("./file_modes.rb")
+      @file_modes = Kernel.eval(File.read("./file_modes.rb"))
+    else
+      raise "Could not find ./MrubyEditorCommands.rb"
     end
     @user_state = {}
 
     use_editor_font_in_command_line
     restore_editor_state
 
-    @ace.focus
+    @editor.focus
+    theme :monokai
+    mode :ruby
   end
 
   def use_editor_font_in_command_line
-    editor_style = JS.getComputedStyle(@ace.container)
+    editor_style = JS.getComputedStyle(@editor.container)
     @commandLine.style.fontFamily = editor_style.fontFamily;
     @commandLine.style.fontSize = editor_style.fontSize
   end
 
   def save_editor_state
-    JS.localStorage.script = @ace.getValue
+    JS.localStorage.script = @editor.getValue
     JS.localStorage.commandLine = @commandLine.textContent
   end
 
   def restore_editor_state
     unless JS.localStorage.script.is_undefined?
-      @ace.setValue JS.localStorage.script
+      @editor.setValue JS.localStorage.script
     end
 
     unless JS.localStorage.commandLine.is_undefined?
@@ -98,7 +107,7 @@ class MrubyEditor
 
       @commandLine.addEventListener 'keydown' do |e|
         if e.ctrlKey.bool_value && e.keyCode.int_value == "\t".ord # Tab
-          @ace.focus
+          @editor.focus
         end
       end
 
@@ -109,7 +118,7 @@ class MrubyEditor
           save_editor_state
           self.instance_eval(@commandLine.textContent.to_s)
           if e.ctrlKey.bool_value
-            @ace.focus
+            @editor.focus
           end
         end
       end
@@ -142,7 +151,7 @@ class MrubyEditor
   end
 
   def multiple_cursors?
-    @ace.selection.ranges.length.int_value != 0
+    @editor.selection.ranges.length.int_value != 0
   end
 
   def selection?
@@ -157,7 +166,7 @@ class MrubyEditor
   end
 
   def each_cursor(&block)
-    @ace.forEachSelection({ exec: JS.function(&block) })
+    @editor.forEachSelection({ exec: JS.function(&block) })
   end
 
   def each_range(&block)
@@ -165,10 +174,10 @@ class MrubyEditor
       return enum_for(:each_range)
     end
     if multiple_cursors?
-      @ace.selection.getAllRanges.forEach(&block)
+      @editor.selection.getAllRanges.forEach(&block)
     else
-      cursor = @ace.selection.getCursor
-      range = @ace.selection.getRange
+      cursor = @editor.selection.getCursor
+      range = @editor.selection.getRange
       # With getAllRanges, each range has a cursor reference.
       # This normalizes the single range case so that all calls are the same.
       range[:cursor] = cursor
@@ -188,9 +197,9 @@ class MrubyEditor
     results = {}
 
     each_cursor do
-      if @ace.selection.getRange.isEmpty.bool_value
-        @ace.navigateLineStart
-        @ace.selection.selectLineEnd
+      if @editor.selection.getRange.isEmpty.bool_value
+        @editor.navigateLineStart
+        @editor.selection.selectLineEnd
       end
     end
 
@@ -208,6 +217,6 @@ class MrubyEditor
   end
 
   def method_missing(name, *args, &block)
-    @ace.send(name, *args, &block)
+    @editor.send(name, *args, &block)
   end
 end
