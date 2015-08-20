@@ -34,6 +34,10 @@ command 'selectRight', 'Ctrl-Shift-F' do
   each_cursor { @editor.selection.selectRight(1) }
 end
 
+command 'delete', 'Ctrl-D' do
+  @editor.execCommand('del')
+end
+
 command 'navigateLineStart', 'Ctrl-A' do
   each_cursor { @editor.navigateLineStart }
 end
@@ -63,19 +67,7 @@ command 'redo', 'Ctrl-Shift-Z' do
 end
 
 command 'align' do
-  max_col = 0
-  each_cursor do
-    cursor = @editor.selection.getCursor
-    col = cursor.column.int_value
-    max_col = (max_col > col ? max_col : col)
-  end
-  each_cursor do
-    cursor = @editor.selection.getCursor
-    col = cursor.column.int_value
-    if col < max_col
-      @document.insert cursor, (' ' * (max_col - col))
-    end
-  end
+  @editor.execCommand('alignCursors')
 end
 
 command 'dup' do
