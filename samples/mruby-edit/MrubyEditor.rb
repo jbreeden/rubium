@@ -49,6 +49,24 @@ class MrubyEditor
     end
 
     restore_editor_state
+    read_query_string
+  end
+
+  def read_query_string
+    @query = Hash.new { |h, k| h[k] = [] }
+    JS.window.location.search.to_s
+      .sub("?", '')
+      .split("&")
+      .map { |c| JS.decodeURIComponent(c).to_s }
+      .each { |param|
+        if param.include?("=")
+          param_name = param[0...(param.index("="))]
+          param_value = param[(param.index("=") + 1)..-1]
+          @query[param_name].push(param_value)
+        else
+          @query[param].push('')
+        end
+      }
   end
 
   def method_missing(name, *args, &block)
