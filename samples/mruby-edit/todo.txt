@@ -10,3 +10,7 @@
        it will be re-thrown in JavaScript once the V8 handler catches the ruby
        exception.
 - Q: Can we make `enum_for` work with JavaScript iterators? (like jsArray.forEach(&ruby_block))
+
+
+- ctrl-tab doesn't work with focus changes
+- 

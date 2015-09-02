@@ -1,6 +1,15 @@
 JS = Cef::V8
 
 module JS
+  class << JS
+    alias legacy_eval eval
+    def eval(str)
+      legacy_eval(str) do |exc|
+        raise exc.message
+      end
+    end
+  end
+
   def self.type_of(js_object)
     if js_object.is_undefined?
       'undefined'

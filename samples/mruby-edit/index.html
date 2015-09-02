@@ -12,42 +12,17 @@
     height: 100%;
   }
 
-  .vflex {
-    display: flex;
-    flex-direction: column;
+  #mruby-editor {
     height: 100%;
-    align-items: stretch;
-  }
-
-  #editor {
-    width: 100%;
-    flex-grow: 1;
-  }
-
-  #command-line {
-    padding: 6px;
-    background-color: rgba(0, 0, 0, 0.1);
-    border-style: solid;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.2);
-  }
-
-  #command-line:focus {
-    outline-style: none;
   }
 </style>
 </head>
 <body>
-<div class="vflex">
-  <div id="editor"></div>
-  <div contentEditable="true" id="command-line"></div>
-</div>
+<div id="mruby-editor"></div>
 <script src="js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
   ruby('load "./MrubyEditor.rb"');
-  window.commandLine = document.getElementById('command-line');
-  window.editor = ace.edit("editor");
-  MrubyEditor(editor, commandLine);
+  MrubyEditor('#mruby-editor');
 </script>
 </body>
 </html>

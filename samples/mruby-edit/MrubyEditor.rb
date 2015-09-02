@@ -1,222 +1,115 @@
-JS.window[:MrubyEditor] = JS.function do |aceEditor, commandLine|
-  unless aceEditor && commandLine
-    raise "MrubyEditor expects two arguments - an ace editor, and a div with editable content for the command line"
-  end
-  $ed = MrubyEditor.new(aceEditor, commandLine)
+JS.window[:MrubyEditor] = JS.function do |selector|
+  $ed = MrubyEditor.new(selector)
 end
 
 class MrubyEditor
-  def initialize(aceEditor, commandLine)
-    @editor = aceEditor
+  load './MrubyEditor/ace_adapters.rb'
+  load './MrubyEditor/view.rb'
+  load './MrubyEditor/file_modes.rb'
+  load './MrubyEditor/eval_strategy.rb'
+  load './MrubyEditor/state_management.rb'
+  load './MrubyEditor/properties.rb'
+  load './MrubyEditor/model.rb'
+
+  include AceAdapters
+  include EvalStrategy
+  include StateManagement
+
+  def initialize(selector)
+    @model = Model.new()
+    @view = View.new(@model, selector)
+    @editor = @view.editor
     @session = @editor.getSession
     @document = @session.doc
-    @commandLine = commandLine
-
-    @editor.setOptions({
-      mode: "ace/mode/ruby",
-      tabSize: 2,
-      useSoftTabs: true
-    })
-
-    bind_event_handlers
-    if File.exists?("./MrubyEditorCommands.rb")
-      self.instance_eval(File.read("./MrubyEditorCommands.rb"))
-    else
-      raise "Could not find ./MrubyEditorCommands.rb"
-    end
-    if File.exists?("./file_modes.rb")
-      @file_modes = Kernel.eval(File.read("./file_modes.rb"))
-    else
-      raise "Could not find ./MrubyEditorCommands.rb"
-    end
+    self.instance_eval(File.read('./MrubyEditor/commands.rb'))
     @user_state = {}
-
-    use_editor_font_in_command_line
-    restore_editor_state
-
     @editor.focus
-    theme :monokai
+    theme :pastel_on_dark
     mode :ruby
-  end
+    setFontSize(13)
 
-  def use_editor_font_in_command_line
-    editor_style = JS.getComputedStyle(@editor.container)
-    @commandLine.style.fontFamily = editor_style.fontFamily;
-    @commandLine.style.fontSize = editor_style.fontSize
-  end
-
-  def save_editor_state
-    JS.localStorage.script = @editor.getValue
-    JS.localStorage.commandLine = @commandLine.textContent
-  end
-
-  def restore_editor_state
-    unless JS.localStorage.script.is_undefined?
-      @editor.setValue JS.localStorage.script
-    end
-
-    unless JS.localStorage.commandLine.is_undefined?
-      @commandLine.textContent = JS.localStorage.commandLine
-    end
-  end
-
-  def save_user_state
-    @user_state[:scroll_top] = @session.getScrollTop
-  end
-
-  def save_state
-    save_editor_state
-    save_user_state
-  end
-
-  def restore_user_state
-    @session.setScrollTop @user_state[:scroll_top] if @user_state[:scroll_top]
-  end
-
-  def maintain_user_state(&block)
-    save_state # editor & user states (so we can restore editor in case of crash)
-    block[]
-    restore_user_state
-  end
-
-  # Syntax sugar for adding commands
-  # Also creates a method on the MrubyEditor class
-  # to invoke the command.
-  def command(name, chord = nil, &block)
-    # Add the command as a method for quick command line use.
-    # Recall the command line text is eval'ed in the context of the editor.
-    self.singleton_class.instance_eval do
-      define_method name do
-        block[]
-      end
-    end
-
-    # Add the command to the aceEditor (mostly for keybindings)
-    commands.addCommand({
-        name: name,
-        bindKey: chord,
-        exec: JS.function(&block)
-    })
-  end
-
-  def bind_event_handlers
-    if @commandLine
-      command 'gotoCommandLine', 'Ctrl-Tab' do
-        @commandLine.focus
-      end
-
-      @commandLine.addEventListener 'keydown' do |e|
-        if e.ctrlKey.bool_value && e.keyCode.int_value == "\t".ord # Tab
-          @editor.focus
-        end
-      end
-
-      @commandLine.addEventListener 'keydown' do |e|
-        if e.keyCode.int_value == 13 # Enter
-          e.preventDefault
-          e.stopPropagation
-          save_editor_state
-          self.instance_eval(@commandLine.textContent.to_s)
-          if e.ctrlKey.bool_value
-            @editor.focus
-          end
-        end
-      end
-    end
-
-    command "runSelections", "Ctrl-R" do
-      maintain_user_state do
-        self.eval
-      end
-    end
-
-    command "runSelectionsAndPrint", "Ctrl-Shift-R" do
-      maintain_user_state do
-        results = self.eval
-        lines = []
-        @document.getAllLines.forEach do |line|
-          lines.push(line.to_s)
-        end
-        adjustment = 1
-        results.keys.each do |row_num|
-          result = results[row_num]
-          next unless result
-          result = result.to_s.gsub(/\r\n|\r/, "\n")
-          lines = result.split("\n")
-          @document.insertFullLines(row_num + adjustment, lines)
-          adjustment += lines.length
-        end
-      end
-    end
-  end
-
-  def multiple_cursors?
-    @editor.selection.ranges.length.int_value != 0
-  end
-
-  def selection?
-    each_range do |range|
-      return true unless range.isEmpty.bool_value
-    end
-    return false
-  end
-
-  def get_text_range(range)
-    @document.getTextRange(range).to_s
-  end
-
-  def each_cursor(&block)
-    @editor.forEachSelection({ exec: JS.function(&block) })
-  end
-
-  def each_range(&block)
-    unless block
-      return enum_for(:each_range)
-    end
-    if multiple_cursors?
-      @editor.selection.getAllRanges.forEach(&block)
-    else
-      cursor = @editor.selection.getCursor
-      range = @editor.selection.getRange
-      # With getAllRanges, each range has a cursor reference.
-      # This normalizes the single range case so that all calls are the same.
-      range[:cursor] = cursor
-      block[range]
-    end
-  end
-
-  def each_range_in_order(&block)
-    ranges = []
-    each_range do |r|
-      ranges.push(r)
-    end
-    ranges.sort_by { |r| [r.start.row.int_value, r.start.column.int_value] }.each(&block)
-  end
-
-  def eval
-    results = {}
-
-    each_cursor do
-      if @editor.selection.getRange.isEmpty.bool_value
-        @editor.navigateLineStart
-        @editor.selection.selectLineEnd
-      end
-    end
-
-    each_range do |range|
+    @model.command_invoked.subscribe do
+      save_editor_state
+      result = nil
       begin
-        results[range.end.row.int_value] = Kernel.eval(get_text_range(range)).to_s
+        case @model.terminal_mode.get
+        when :ruby
+          result = self.instance_eval(@model.command_line.get)
+        when :shell
+          result = `#{@model.command_line.get}`
+        when :js
+          result = JS.eval(@model.command_line.get)
+        end
+        @model.last_command_result.set result
       rescue Exception => ex
-        err = ex.inspect.to_s
-        JS.console.warn(err)
-        results[range.end.row.int_value] = err
+        @model.last_command_result.set ex.to_s
       end
+      @model.cwd.set(Dir.pwd)
+      @model.command_completed.trigger
     end
 
-    results
+    restore_editor_state
   end
 
   def method_missing(name, *args, &block)
     @editor.send(name, *args, &block)
+  end
+
+  def theme(name)
+    @editor.setTheme("ace/theme/#{name}")
+  end
+
+  def mode(name)
+    @session.setMode("ace/mode/#{name}")
+  end
+
+  def insert(text)
+    puts @editor.class
+    each_cursor { @editor.insert(text) }
+  end
+
+  def open(path, opt = {})
+    if File.exists?(path)
+      @editor.setValue(File.read(path))
+      if opt[:mode]
+        mode opt[:mode]
+      else
+        @@file_modes.keys.each do |ext|
+          if path.end_with?(ext)
+            mode @@file_modes[ext]
+            break
+          end
+        end
+      end
+      @editor.navigateFileStart
+      @model.file_name.set(path)
+      :success
+    else
+      raise "File not found: #{path}"
+    end
+  end
+  alias fopen open
+
+  def save(file_name = nil, force = false)
+    if file_name.nil?
+      open_file = @model.file_name.get
+      if open_file.nil?
+        raise "Please specify a file name"
+      else
+        File.open(open_file, 'w') do |f|
+          f.write(@editor.getValue.to_s)
+          :success
+        end
+      end
+    else
+      if File.exists?(file_name) && !force
+        raise "File exists. Use 'save FILE_NAME, :force' to overwrite it."
+      else
+        File.open(file_name, 'w') do |f|
+          f.write(@editor.getValue.to_s)
+          :success
+        end
+      end
+    end
   end
 end
