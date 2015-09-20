@@ -55,7 +55,9 @@ MRuby::Gem::Specification.new('mruby-bin-rubium') do |spec|
     (spec.linker.flags_after_libraries = []) << "#{ENV['CEF_HOME']}/build/libcef_dll/libcef_dll_wrapper.a"
   elsif OS.windows?
     FileUtils.cp "#{RubiumBinGem.dir}/platform-bins/win/rubium.cpp", "#{RubiumBinGem.dir}/tools/rubium"
+    (spec.linker.flags_before_libraries = []) << "#{ENV['CEF_HOME']}/out/#{configuration}/lib/libcef_dll_wrapper.lib"
+    spec.linker.library_paths << "#{ENV['CEF_HOME']}/#{configuration}"
     spec.linker.libraries << "User32"
-    (spec.linker.flags_after_libraries = []) << "#{ENV['CEF_HOME']}/build/libcef_dll/#{configuration}/libcef_dll_wrapper.a"
+    spec.linker.libraries << "libcef"
   end
 end

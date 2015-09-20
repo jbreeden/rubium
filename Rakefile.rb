@@ -30,12 +30,12 @@ namespace :mruby do
     # I'll try to fix this later
     if ENV['OS'] =~ /windows/i
       Dir.chdir "mruby/bin" do
-        mv 'mirb', 'mirb.exe'
-        mv 'mruby', 'mruby.exe'
-        mv 'mrbc', 'mrbc.exe'
-        mv 'mruby-strip', 'mruby-strip.exe'
-        mv 'rubium', 'rubium.exe'
-        mv 'rubiumw', 'rubiumw.exe'
+        mv 'mirb', 'mirb.exe' if File.exists?('mirb')
+        mv 'mruby', 'mruby.exe' if File.exists?('mruby')
+        mv 'mrbc', 'mrbc.exe' if File.exists?('mrbc')
+        mv 'mruby-strip', 'mruby-strip.exe' if File.exists?('mruby')
+        mv 'rubium', 'rubium.exe' if File.exists?('rubium')
+        mv 'rubiumw', 'rubiumw.exe' if File.exists?('rubiumw')
       end
     end
   end

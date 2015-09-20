@@ -56,6 +56,19 @@ elsif OS.linux?
   end
 else
   def package(configuration)
-    raise "Not defined for this platform"
+    app_dir = "rubium"
+    app_name = "rubium.exe"
+    app_location = "mruby/bin/rubium.exe"
+
+    rm_rf app_dir if Dir.exists?(app_dir)
+    mkdir app_dir
+    Dir["#{CEF.dir}/out/#{configuration}/*.{dll,pak}"].each do |file|
+      cp_r file, app_dir
+    end
+    mkdir "#{app_dir}/locales"
+    Dir["#{CEF.dir}/out/#{configuration}/locales/*"].each do |file|
+      cp_r file, "#{app_dir}/locales"
+    end
+    cp app_location, "#{app_dir}/#{app_name}"
   end
 end

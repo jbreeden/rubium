@@ -47,8 +47,9 @@ RubiumLifeSpanHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
 
 #if defined(_WIN32) || defined(_WIN64)
    // Set the frame window title bar
-   CefWindowHandle hwnd = browser->GetHost()->GetWindowHandle();
-   SetWindowTextA(hwnd, rubium_opt_window_title().c_str());
+  //  TODO: Re-enable
+  //  CefWindowHandle hwnd = browser->GetHost()->GetWindowHandle();
+  //  SetWindowTextA(hwnd, rubium_opt_window_title().c_str());
 
    /*const HICON hicon = ::LoadIcon(
       ::GetModuleHandle(0),

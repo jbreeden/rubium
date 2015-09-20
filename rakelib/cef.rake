@@ -4,7 +4,7 @@ module CEF
   elsif OS.linux?
     @dir = File.expand_path "cef_distros/cef_binary_3.2171.1979_linux64"
   else
-    raise 'Please define CEF dir for Windows'
+    @dir = File.expand_path "cef_distros/cef_binary_3.2171.1979_windows64"
   end
 
   class << self
@@ -42,6 +42,8 @@ elsif OS.linux?
   end
 else
   def build_cef_target(target, configuration)
-    raise "Not defined for this platform"
+    cd CEF.dir do
+      sh("msbuild cefclient2010.sln /property:Configuration=Release /property:Platform=X64")
+    end
   end
 end
