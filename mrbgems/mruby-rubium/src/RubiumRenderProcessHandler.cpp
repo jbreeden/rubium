@@ -44,15 +44,22 @@ void RubiumRenderProcessHandler::OnContextCreated(CefRefPtr<CefBrowser> browser,
 
       context->Eval(buffer, ret, exc);
 
+
+#if defined(_WIN32)
       if (exc.get() != NULL) {
         LAMINA_LOG("ERROR: On line "
           << exc->GetLineNumber()
           << " of file "
           << native_content_script
           << ". "
-#if defined(_WIN32)
           << exc->GetMessageA().ToString());
 #else
+      if (exc.get() != NULL) {
+        LAMINA_LOG("ERROR: On line "
+          << exc->GetLineNumber()
+          << " of file "
+          << native_content_script
+          << ". "
           << exc->GetMessage().ToString());
 #endif
       }

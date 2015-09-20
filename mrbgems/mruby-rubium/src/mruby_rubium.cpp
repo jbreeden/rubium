@@ -192,6 +192,7 @@ void mrb_mruby_rubium_gem_final(mrb_state* mrb) {}
  *********************************/
 int rubium_main()
 {
+   LAMINA_LOG("rubium_main: Entering");
    apr_initialize();
    mrb_state* mrb = mrb_open();
    set_mrb_for_thread(mrb);
@@ -226,15 +227,15 @@ int rubium_main()
   // that share the same executable. This function checks the command-line and,
   // if this is a sub-process, executes the appropriate logic.
 
-  //  LAMINA_LOG("rubium_main: Executing CEF Process");
+   LAMINA_LOG("rubium_main: Executing CEF Process");
   int exit_code = CefExecuteProcess(main_args, app.get(), sandbox_info);
   if (exit_code >= 0) {
-    // LAMINA_LOG("rubium_main: Subprocess exited");
+    LAMINA_LOG("rubium_main: Subprocess exited");
     // The sub-process has completed so return here.
     return exit_code;
   }
 
-  //  LAMINA_LOG("rubium_main: This is a CEF browser process");
+   LAMINA_LOG("rubium_main: This is a CEF browser process");
 
   // Specify CEF global settings here.
   CefSettings settings;

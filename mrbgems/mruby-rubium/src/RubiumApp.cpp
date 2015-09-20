@@ -30,7 +30,7 @@ void RubiumApp::OnContextInitialized() {
    // On Windows we need to specify certain flags that will be passed to
    // CreateWindowEx().
    // TODO: Re-enable
-   // window_info.SetAsPopup(NULL, rubium_opt_window_title());
+   window_info.SetAsPopup(NULL, "Rubium");
 #endif
 
    // RubiumHandler implements browser-level callbacks.

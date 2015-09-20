@@ -62,7 +62,7 @@ else
 
     rm_rf app_dir if Dir.exists?(app_dir)
     mkdir app_dir
-    Dir["#{CEF.dir}/out/#{configuration}/*.{dll,pak}"].each do |file|
+    Dir["#{CEF.dir}/out/#{configuration}/*.{dll,pak,dat}"].each do |file|
       cp_r file, app_dir
     end
     mkdir "#{app_dir}/locales"
