@@ -21,7 +21,9 @@
 <div id="mruby-editor"></div>
 <script src="js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
-  ruby('load "./MrubyEditor.rb"');
+  ruby('$APP = "' + window.location.pathname.replace('index.html', '') + '"')
+  ruby('$LOAD_PATH << $APP')
+  ruby('load "MrubyEditor.rb"');
   MrubyEditor('#mruby-editor');
 </script>
 </body>

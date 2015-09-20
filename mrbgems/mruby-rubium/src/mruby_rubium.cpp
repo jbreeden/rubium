@@ -217,6 +217,11 @@ int rubium_main()
   //  LAMINA_LOG("rubium_main: Creating App");
   CefRefPtr<RubiumApp> app(new RubiumApp);
 
+  if (g_command_line->HasSwitch("content-script")) {
+    std::cout << "Setting CONTENT_SCRIPT" << std::endl;
+    mrb_load_string(mrb,  (string("ENV['CONTENT_SCRIPT'] = '") + g_command_line->GetSwitchValue("content-script").ToString() + "'").c_str());
+  }
+
   // CEF applications have multiple sub-processes (render, plugin, GPU, etc)
   // that share the same executable. This function checks the command-line and,
   // if this is a sub-process, executes the appropriate logic.

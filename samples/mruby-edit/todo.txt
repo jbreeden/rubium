@@ -11,6 +11,25 @@
        exception.
 - Q: Can we make `enum_for` work with JavaScript iterators? (like jsArray.forEach(&ruby_block))
 
+Macro UI Enhancements
+- Context menu: Run As
+- Directory side bar
+- Tabs
 
+Micro UI Enhancement
+- Unsaved changes indication
+- Save/open shortcuts
+- Command line success/error indication
 - ctrl-tab doesn't work with focus changes
+
+Debugging System
+- Content scripts
+- Inject content scripts from previous window
+- Break/log/trace on ajax start/stop
+- Decorate backbone classes
+  + Attach views to DOM
+  + Make views selectable (Click view's dom to inspect in console)
+
+Ajax Debugging
+- Replace js extensions as content-script option
 - 

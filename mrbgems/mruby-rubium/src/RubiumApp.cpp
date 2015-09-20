@@ -56,7 +56,6 @@ void RubiumApp::OnContextInitialized() {
    }
 
    // Create the first browser window.
-   cout << "Opening URL: " << url << std::endl;
    CefRefPtr<CefBrowser> browser = CefBrowserHost::CreateBrowserSync(window_info, handler.get(), url, browser_settings, NULL);
    if (g_command_line->HasSwitch("dev-tools")) {
      browser->GetHost()->ShowDevTools(window_info, handler.get(), browser_settings, CefPoint(0, 0));
