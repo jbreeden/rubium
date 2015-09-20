@@ -3,13 +3,13 @@ JS.window[:MrubyEditor] = JS.function do |selector|
 end
 
 class MrubyEditor
-  load './MrubyEditor/ace_adapters.rb'
-  load './MrubyEditor/view.rb'
-  load './MrubyEditor/file_modes.rb'
-  load './MrubyEditor/eval_strategy.rb'
-  load './MrubyEditor/state_management.rb'
-  load './MrubyEditor/properties.rb'
-  load './MrubyEditor/model.rb'
+  load 'MrubyEditor/ace_adapters.rb'
+  load 'MrubyEditor/view.rb'
+  load 'MrubyEditor/file_modes.rb'
+  load 'MrubyEditor/eval_strategy.rb'
+  load 'MrubyEditor/state_management.rb'
+  load 'MrubyEditor/properties.rb'
+  load 'MrubyEditor/model.rb'
 
   include AceAdapters
   include EvalStrategy
@@ -21,7 +21,13 @@ class MrubyEditor
     @editor = @view.editor
     @session = @editor.getSession
     @document = @session.doc
-    self.instance_eval(File.read('./MrubyEditor/commands.rb'))
+    $LOAD_PATH.each do |dir|
+      if File.exists?("#{dir}/MrubyEditor/commands.rb")
+        self.instance_eval(File.read("#{dir}/MrubyEditor/commands.rb"))
+        break
+      end
+      raise "Could not load MrubyEditor/commands.rb"
+    end
     @user_state = {}
     @editor.focus
     theme :pastel_on_dark
@@ -50,6 +56,7 @@ class MrubyEditor
 
     restore_editor_state
     read_query_string
+    process_query_params
   end
 
   def read_query_string
@@ -67,6 +74,12 @@ class MrubyEditor
           @query[param].push('')
         end
       }
+  end
+
+  def process_query_params
+    if @query['file'].length > 0
+      open(@query['file'][0])
+    end
   end
 
   def method_missing(name, *args, &block)
@@ -87,26 +100,45 @@ class MrubyEditor
   end
 
   def open(path, opt = {})
-    if File.exists?(path)
-      @editor.setValue(File.read(path))
-      if opt[:mode]
-        mode opt[:mode]
-      else
-        @@file_modes.keys.each do |ext|
-          if path.end_with?(ext)
-            mode @@file_modes[ext]
-            break
-          end
+    if File.exists?(path) && File.directory?(path)
+      raise "Cannot edit directory #{path}"
+    end
+
+    unless File.exists?(path)
+      File.open(path, 'w').close
+    end
+
+    current_file = @model.file_name.get
+    unless opt[:replace] || current_file.nil?
+      return JS.window.open(JS.window.location.href.to_s.sub(JS.window.location.search.to_s, '') + "?file=#{path}")
+    end
+
+    @editor.setValue(File.read(path))
+    if opt[:mode]
+      mode opt[:mode]
+    else
+      @@file_modes.keys.each do |ext|
+        if path.end_with?(ext)
+          mode @@file_modes[ext]
+          break
         end
       end
-      @editor.navigateFileStart
-      @model.file_name.set(path)
-      :success
-    else
-      raise "File not found: #{path}"
     end
+    @editor.navigateFileStart
+    @model.file_name.set(path)
+    :success
   end
   alias fopen open
+
+  def replace(path)
+    open(path, replace: true)
+  end
+
+  def refresh
+    unless @model.file_name.get.nil?
+      open(@model.file_name.get, replace: true)
+    end
+  end
 
   def save(file_name = nil, force = false)
     if file_name.nil?
