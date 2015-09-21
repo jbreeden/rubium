@@ -65,88 +65,55 @@ JS.create_string 'Hello, from mruby!'
 obj = JS.create_object
 obj[:myRubyClass] = JS.create_string(obj.class.to_s)
 </test-case>
-<test-case>
-# Showing the type of JavaScript exceptions in Ruby
-
-JS.eval "throw 'JavaScript Exception'" do |exc|
-  JS.create_string(exc.class.to_s)
-end
-</test-case>
 
 <!-- Checking the type of JavaScript objects from Ruby -->
 
 <test-case>
-# `type_of` shows the methods you use to
-# check the type of JavaScript objects in Ruby
-
-def type_of(js_object)
-  if js_object.is_undefined?
-    'undefined'
-  elsif js_object.is_null?
-    'null'
-  elsif js_object.is_bool?
-    'bool'
-  elsif js_object.is_int?
-    'int'
-  elsif js_object.is_uint?
-    'uint'
-  elsif js_object.is_double?
-    'double'
-  elsif js_object.is_date?
-    'date'
-  elsif js_object.is_string?
-    'string'
-  elsif js_object.is_array?
-    'array'
-  elsif js_object.is_function?
-    'function'
-  elsif js_object.is_object?
-    'object'
-  end
-end
+# `JS.type_of` checks the type of JavaScript objects in Ruby.
+# This is similar to JavaScripts "typeof" function, but mirrors the C API.
 
 js_obj = JS.eval "undefined"
-JS.create_string type_of(js_obj)
+JS.create_string JS.type_of(js_obj)
 </test-case>
 <test-case>
 js_obj = JS.eval "null"
-JS.create_string type_of(js_obj)
+JS.create_string JS.type_of(js_obj)
 </test-case>
 <test-case>
 js_obj = JS.eval "true"
-JS.create_string type_of(js_obj)
+JS.create_string JS.type_of(js_obj)
 </test-case>
 <test-case>
 js_obj = JS.eval "false"
-JS.create_string type_of(js_obj)
+JS.create_string JS.type_of(js_obj)
 </test-case>
 <test-case>
 js_obj = JS.eval "1"
-JS.create_string type_of(js_obj)
+JS.create_string JS.type_of(js_obj)
 </test-case>
 <test-case>
 js_obj = JS.eval "1.5"
-JS.create_string type_of(js_obj)
+JS.create_string JS.type_of(js_obj)
 </test-case>
 <test-case>
 js_obj = JS.eval "new Date()"
-JS.create_string type_of(js_obj)
+JS.create_string JS.type_of(js_obj)
 </test-case>
 <test-case>
 js_obj = JS.eval "'test'"
-JS.create_string type_of(js_obj)
+JS.create_string JS.type_of(js_obj)
 </test-case>
 <test-case>
 js_obj = JS.eval "[]"
-JS.create_string type_of(js_obj)
+JS.create_string JS.type_of(js_obj)
 </test-case>
 <test-case>
 js_obj = JS.eval "(function () {})"
-JS.create_string type_of(js_obj)
+JS.create_string JS.type_of(js_obj)
 </test-case>
 <test-case>
 js_obj = JS.eval "{}"
-JS.create_string type_of(js_obj)
+JS.create_string JS.type_of(js_obj)
 </test-case>
 
 <!-- Reading primitive values from JavaScript objects in Ruby -->
@@ -193,11 +160,12 @@ JS.eval "'String created by JS.eval'"
 
 # `ls` gives JavaScript access to file system info.
 JS.create_function "ls" do |args|
-  result = JS.eval("[]")
+  # TODO: Can't use variable name "result" here without exceptions
+  ary = JS.eval("[]")
   Dir.entries('.').each do |e|
-    result[:push].apply(result, [JS.create_string(e)])
+    ary.push JS.create_string(e)
   end
-  result
+  ary
 end
 </test-case>
 <test-case>
@@ -233,17 +201,27 @@ end
 <test-case>
 # Call JavaScript functions from Ruby with `apply`
 # Signature: `jsFunction.apply(context, args_array)`
-# Providing a block to apply catches any exceptions
+# Always provide a block to apply catches any exceptions
 
 JS.eval "function throws() { " +
 "   throw 'Exception from `throws()`'; " +
 "}"
 
-JS.window[:rbCatch] =
-JS.create_function "rbCatch" do |args|
-  JS.window[:throws].apply(JS.window, []) do |exc|
-    JS.create_string "Caught exception from apply: #{exc}"
-  end
+JS.window[:throws].apply(JS.window, []) do |exc|
+  JS.create_string "Block received exception: #{exc}"
+end
+</test-case>
+
+<test-case>
+# Or use the "method_missing" API to call JS
+# functions like normal ruby methods. In this case,
+# any JavaScript exceptions will be thrown as Ruby
+# exceptionss
+
+begin
+  JS.window.throws
+rescue Exception => exc
+  JS.create_string "Ruby caught: #{exc}"
 end
 </test-case>
 
@@ -278,6 +256,7 @@ end
 # It is possible to catch a JavaScript exception via the
 # block provided to `apply`, and then rethrow it as
 # a ruby exception to be handled in a `rescue` block
+# (Note: this is the behavior of the method_missing API)
 
 JS.create_function "rbRecatch" do |args|
   begin
@@ -292,15 +271,15 @@ end
 </test-case>
 
 <test-case>
-# Just like `JsObject#apply`, `V8::eval` will catch JavaScript
-# exceptions and pass them to any supplied block. Also
-# like `JsObject#apply`, if a block is not supplied, the exception
-# will be re-risen withen JavaScript only.
-#
-# ALWAYS supply a block if the JavaScript call may throw.
-# If it does throw, handle the exception or rethrow it to bail out.
+# JS.eval behaves the same way as the method_missing API
+# for calling JS functions. Any exceptions are re-raised
+# as Ruby exceptions. If you don't catch the and the call
+# stack unwinds to a JavaScript frame again, the Exception
+# will be re-thrown as a JavaScript exception. And so on...
 
-JS.eval("throw 'test'") do |exc|
+begin
+  JS.eval("throw 'test'")
+rescue Exception => exc
   JS.create_string "Caugh exception from eval: #{exc.message}"
 end
 </test-case>
@@ -315,8 +294,12 @@ end
 
 <script>
   function test(code) {
-    var result = ruby(code);
-    // var result = undefined;
+    var result;
+    try {
+      result = ruby(code);
+    } catch (ex) {
+      result = ex.toString();
+    }
 
     // Format code for display (strip whitespace)
     code = code.match(/([^\s][\s\S]*[^\s])/mi)[1]

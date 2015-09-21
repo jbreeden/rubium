@@ -97,7 +97,10 @@ class JS::JsObject
     # Function invocation
     elsif self[name].is_function?
       if block.nil?
-        self[name].apply(self, args)
+        self[name].apply(self, args) do |exc|
+          $stderr.puts "WARNING: JavaScript function threw #{exc.message}"
+          raise exc.message
+        end
       else
         # If a block was supplied, pass it as a function in the last argument to the called function
         func = JS.create_function 'anonymous' do |args|
