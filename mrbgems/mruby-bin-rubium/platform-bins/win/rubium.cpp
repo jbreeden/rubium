@@ -19,6 +19,7 @@
      app_handle = hInstance;
      g_command_line = CefCommandLine::CreateCommandLine();
      g_command_line->InitFromString(lpCmdLine);
+     rubium_check_usage();
      return rubium_main();
   }
 
@@ -31,9 +32,9 @@
 
   int main()
   {
-     LAMINA_LOG("main: enter");
      g_command_line = CefCommandLine::CreateCommandLine();
      g_command_line->InitFromString(GetCommandLine());
+     rubium_check_usage();
      return rubium_main();
   }
 

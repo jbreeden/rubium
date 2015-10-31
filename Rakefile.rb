@@ -1,3 +1,5 @@
+load './rakelib/submodule.rake'
+
 module OS
   def OS.windows?
     (/cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM) != nil
@@ -66,3 +68,5 @@ EOS
     stub.chmod(0755)
   end
 end
+
+submodule :apr, './mrbgems/mruby-apr/Rakefile.rb'

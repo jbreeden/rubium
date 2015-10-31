@@ -1,7 +1,5 @@
 /* TODO
- * This file needs some *serious* love.
- * It was once a scrappy little proof of concept...
- * But it has become a horrible, incohesive, glob of garbage.
+ * Separate the components in this file.
  */
 
 /* System Includes */
@@ -119,14 +117,6 @@ public:
     // LAMINA_LOG("MrbThreadManager: Mutex check done");
   }
 
-  void set_mrb_for_thread(mrb_state* mrb) {
-    // LAMINA_LOG("MrbThreadManager: Setting MRB for current thread");
-    check_mutex();
-    apr_thread_mutex_lock(MrbThreadManager::mutex);
-    set_mrb_for_thread_no_lock(mrb);
-    apr_thread_mutex_unlock(MrbThreadManager::mutex);
-  }
-
   mrb_state* get_mrb_for_thread() {
     // LAMINA_LOG("MrbThreadManager: Getting MRB for current thread");
     check_mutex();
@@ -169,14 +159,6 @@ mrb_state* mrb_for_thread() {
    return mrb_thread_manager.get_mrb_for_thread();
 }
 
-// Only needs to be called for the first thread of the process
-// (Since it is launched as rubium.exe, and an mrb_state will already
-//  be available)
-void set_mrb_for_thread(mrb_state* mrb) {
-  // LAMINA_LOG("Explicitly setting MRB for thead (presumably the main thread).");
-  mrb_thread_manager.set_mrb_for_thread(mrb);
-}
-
 /*********************************
  * Rubium Ruby Module Functions
  *********************************/
@@ -187,15 +169,127 @@ void mrb_mruby_rubium_gem_init(mrb_state* mrb) {
 
 void mrb_mruby_rubium_gem_final(mrb_state* mrb) {}
 
+void rubium_check_usage() {
+  if (g_command_line->HasSwitch("help")) {
+    printf(
+      "\n"
+      "Rubium\n"
+      "\n"
+      "Usage: rubium [OPTIONS...] \n"
+      "\n"
+      "DESCRIPTION\n"
+      "\n"
+      "  Desktop application development with Ruby, JavaScript, HTML, SVG, and CSS.\n"
+      "\n"
+      "OPTIONS\n"
+      "\n"
+      "  --cache-path=DIR\n"
+      "    The directory where rubium will persist cookies, local storage, etc.\n"
+      "    If this option is not supplied, no local storage will be saved.\n"
+      "    The directory, but no parents, will be created if it does not exist.\n"
+      "\n"
+      "  --content-script=JS_FILE\n"
+      "    Path to a javascript file to be injected into each browser window.\n"
+      "\n"
+      "  --dev-tools\n"
+      "    Open the Chromium dev tools in a separate window on launch.\n"
+      "\n"
+      "  --help\n"
+      "    Show this help text.\n"
+      "\n"
+      "  --url=URL\n"
+      "    On startup, open URL instead of searching for an index.html file.\n"
+      "    URL may be a local file, using the file:// protocol, or a remote resource\n"
+      "    addressed with http:// or https://\n"
+      "\n"
+      "APPLICATION STARTUP\n"
+      "\n"
+      "  The options for executing an application with Rubium are as follows:\n"
+      "\n"
+      "  1) Specify the --url=URL parameter.\n"
+      "     Described above, under the \"OPTIONS\" heading."
+      "\n"
+      "  2) Run the `rubium` command in a folder with an index.html file.\n"
+      "     If this file is found, it is opened in a new window, the contents are\n"
+      "     displayed, and any scripts within are executed exactly as in a typical\n"
+      "     web application. This includes loading external scripts with <script>\n"
+      "     tags.\n"
+      "\n"
+      "  3) Run the `rubium` command in a folder with no index.html file.\n"
+      "     In this case, the folder contents are displayed. An application may\n"
+      "     be launched by navigating to the file and selecting it.\n"
+      "\n"
+      "RUNTIME ENVIRONMENT\n"
+      "\n"
+      "  Multiple windows may be opened by the application. Each window will have it's\n"
+      "  own Ruby context as well as the usual JavaScript context. It is important to\n"
+      "  note that each Ruby context is indeed an independent VM instance, and so no\n"
+      "  variables may be shared among them. You may, however, use the browser's built\n"
+      "  in window messaging API to communicate among windows.\n"
+      "\n"
+      "JAVASCRIPT & RUBY INTEROP\n"
+      "\n"
+      "  To call Ruby from JavaScript, pass a string to the `ruby` function.\n"
+      "\n"
+      "    Ex: Writing the working directory contents to the document\n"
+      "    ----------------------------------------------------------\n"
+      "    |  document.write(ruby('`ls`'));\n"
+      "    ----------------------------------------------------------\n"
+      "\n"
+      "  Note that any value returned from Ruby to JavaScript must be converted to a\n"
+      "  JavaScript object. Rubium will do this automatically for built in types like\n"
+      "  Fixnums & booleans. If it does not know how to convert a value, undefined is\n"
+      "  returned instead. You can convert values manually using the JS.create_*\n"
+      "  family of functions.\n"
+      "\n"
+      "  To interact with JavaScript objects - including the DOM - from Ruby,\n"
+      "  use the `JS` module. (Property access, method calls, and block arguments\n"
+      "  should all behave the way you expect.)\n"
+      "\n"
+      "    Ex: Make an alert call on `window` explicitly from Ruby\n"
+      "    ----------------------------------------------------------\n"
+      "    |  JS.window.alert('Hell, from Ruby!')\n"
+      "    ----------------------------------------------------------\n"
+      "\n"
+      "  As with pure JavaScript, any methods called on the JS module are delegated\n"
+      "  to the window object by default.\n"
+      "\n"
+      "    Ex: Make an alert call on `window` implicitly from Ruby\n"
+      "    ----------------------------------------------------------\n"
+      "    |  JS.alert('Hell, from Ruby!')\n"
+      "    ----------------------------------------------------------\n"
+      "\n"
+      "  Any block parameters to a JavaScript function are converted to function\n"
+      "  arguments automatically.\n"
+      "\n"
+      "    Ex: Attaching a DOM event handler from Ruby\n"
+      "    ----------------------------------------------------------\n"
+      "    |  JS.document.addEventListener('onload') do |event|\n"
+      "    |    JS.alert('Document loaded!')\n"
+      "    |  end\n"
+      "    ----------------------------------------------------------\n"
+      "\n"
+      "SEE ALSO:\n"
+      "\n"
+      "  1) http://github.com/mruby/mruby\n"
+      "  The Ruby implementation embedded into Rubium.\n"
+      "\n"
+      "  2) http://github.com/jbreeden/mruby-apr\n"
+      "  A re-implementation of much of the CRuby/MRI standard library for MRuby,\n"
+      "  used by Rubium to provide access to system resources like files & sockets.\n"
+      "\n");
+    exit(0);
+  }
+}
+
 /*********************************
  * Platform agnostic start routine
  *********************************/
 int rubium_main()
 {
-   LAMINA_LOG("rubium_main: Entering");
+  //  LAMINA_LOG("rubium_main: Entering");
    apr_initialize();
-   mrb_state* mrb = mrb_open();
-   set_mrb_for_thread(mrb);
+   mrb_state* mrb = mrb_for_thread();
 
    void* sandbox_info = NULL;
 
@@ -227,15 +321,15 @@ int rubium_main()
   // that share the same executable. This function checks the command-line and,
   // if this is a sub-process, executes the appropriate logic.
 
-   LAMINA_LOG("rubium_main: Executing CEF Process");
+  //  LAMINA_LOG("rubium_main: Executing CEF Process");
   int exit_code = CefExecuteProcess(main_args, app.get(), sandbox_info);
   if (exit_code >= 0) {
-    LAMINA_LOG("rubium_main: Subprocess exited");
+    // LAMINA_LOG("rubium_main: Subprocess exited");
     // The sub-process has completed so return here.
     return exit_code;
   }
 
-   LAMINA_LOG("rubium_main: This is a CEF browser process");
+  //  LAMINA_LOG("rubium_main: This is a CEF browser process");
 
   // Specify CEF global settings here.
   CefSettings settings;
@@ -259,13 +353,13 @@ int rubium_main()
   XSetIOErrorHandler(XIOErrorHandlerImpl);
 #endif
 
-  LAMINA_LOG("rubium_main: Initializing CEF");
+  // LAMINA_LOG("rubium_main: Initializing CEF");
   CefInitialize(main_args, settings, app.get(), sandbox_info);
 
-  LAMINA_LOG("rubium_main: Running the message loop");
+  // LAMINA_LOG("rubium_main: Running the message loop");
   CefRunMessageLoop();
 
-  LAMINA_LOG("rubium_main: Shutting down CEF");
+  // LAMINA_LOG("rubium_main: Shutting down CEF");
   CefShutdown();
 
   return 0;

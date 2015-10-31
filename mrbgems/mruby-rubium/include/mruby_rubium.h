@@ -25,6 +25,7 @@ void set_mrb_for_thread(mrb_state* mrb);
 mrb_value rubium_start(mrb_state* mrb, mrb_value self);
 void mrb_mruby_rubium_gem_init(mrb_state* mrb);
 void mrb_mruby_rubium_gem_final(mrb_state* mrb);
+void rubium_check_usage();
 int rubium_main();
 
 extern int g_argc;

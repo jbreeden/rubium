@@ -90,13 +90,12 @@
 
 -(void)applicationDidFinishLaunching: (NSNotification *)aNotification
 {
-  printf("Starting rubium_main\n");
   rubium_main();
-  printf("Finished: rubium_main\n");
   [self release];
 }
 
-- (void)tryToTerminateApplication:(NSApplication*)app {
+- (void)tryToTerminateApplication:(NSApplication*)app
+{
   RubiumLifeSpanHandler* handler = RubiumLifeSpanHandler::GetInstance();
   if (handler && !handler->IsClosing())
     handler->CloseAllBrowsers(false);
@@ -110,6 +109,8 @@ int main(int argc, char *argv[])
   g_argv = argv;
   g_command_line = CefCommandLine::CreateCommandLine();
   g_command_line->InitFromArgv(argc, argv);
+
+  rubium_check_usage();
 
   // return NSApplicationMain(argc, (const char **) argv);
   @autoreleasepool {
