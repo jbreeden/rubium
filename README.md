@@ -17,7 +17,7 @@ native app.
 Usage
 -----
 
-```sh
+```
 $ rubium --help
 Rubium
 
