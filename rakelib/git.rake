@@ -1,7 +1,6 @@
 def in_each_repo(&block)
   %w(
     .
-    ./mrbgems/mruby-apr
     ./mruby
   ).each do |component_dir|
       Dir.chdir(component_dir, &block)

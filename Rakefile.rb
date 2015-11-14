@@ -1,5 +1,3 @@
-load './rakelib/submodule.rake'
-
 module OS
   def OS.windows?
     (/cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM) != nil
@@ -23,7 +21,7 @@ namespace :mruby do
   task :build do
     Dir.chdir "mruby" do
       ENV['CEF_HOME'] = CEF.dir
-      sh "ruby minirake"
+      sh "rake"
     end
 
     # Hack:
@@ -45,7 +43,7 @@ namespace :mruby do
   desc "Clean the mruby bundled with rubium"
   task :clean do
     Dir.chdir "mruby" do
-      sh "ruby minirake clean"
+      sh "rake clean"
     end
   end
 end
@@ -68,5 +66,3 @@ EOS
     stub.chmod(0755)
   end
 end
-
-submodule :apr, './mrbgems/mruby-apr/Rakefile.rb'

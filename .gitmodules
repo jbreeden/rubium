@@ -1,6 +1,3 @@
-[submodule "mrbgems/mruby-apr"]
-	path = mrbgems/mruby-apr
-	url = http://github.com/jbreeden/mruby-apr
 [submodule "mruby"]
 	path = mruby
 	url = http://github.com/jbreeden/mruby
