@@ -14,11 +14,6 @@ It provides a Chromium shell for your application's UI, letting you develop your
 UI like a web app, while also giving you access to the underlying system like a
 native app.
 
-Demo
-----
-
-![Demo GIF](/rubium_demo.gif?raw=true)
-
 Usage
 -----
 
