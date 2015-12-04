@@ -20,9 +20,9 @@ sudo make install
 git clone http://github.com/jbreeden/rubium
 cd ./rubium
 
-# TODO: There used to be a few submodules. Now there is only MRuby, which really shouldn't be one.
-#       All bugfixes to MRuby have been pushed upstream, so you should be able to use the latest version.
-#       Just note that the Rakefile expect to find MRuby under the rubium directory.
+# TODO: There used to be a few submodules. Now there is only MRuby, which points to an old version.
+#       All bugfixes to MRuby have been pushed upstream, so you should be able to pull the latest version
+#       from https://github.com/mruby/mruby, just make sure you don't overwrite the build_config.rb file.
 git submodule init
 git submodule update
 
