@@ -48,7 +48,7 @@ elsif OS.linux?
 
     rm_rf app_dir if Dir.exists?(app_dir)
     mkdir app_dir
-    Dir["#{CEF.dir}/#{configuration}/*.so"].concat(Dir["#{CEF.dir}/Resources/*"]).each do |file|
+    Dir["#{CEF.dir}/#{configuration}/*.{bin,so}"].concat(Dir["#{CEF.dir}/Resources/*"]).each do |file|
       cp_r file, app_dir
     end
     cp app_location, "#{app_dir}/#{app_name}"
