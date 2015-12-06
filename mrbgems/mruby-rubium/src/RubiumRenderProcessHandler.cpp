@@ -43,6 +43,7 @@ void RubiumRenderProcessHandler::OnContextCreated(CefRefPtr<CefBrowser> browser,
       }
 
       context->Eval(buffer, ret, exc);
+      free(buffer);
 
 
 #if defined(_WIN32)

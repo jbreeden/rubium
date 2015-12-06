@@ -1,5 +1,5 @@
 module CEF
-  @dir = File.expand_path Dir['cef_distros/cef_binary*'].select { |f| File.directory?(f) }.last
+  @dir = File.expand_path Dir['**/cef_binary*'].select { |f| File.directory?(f) }.last
 
   class << self
     attr_reader :dir
@@ -7,6 +7,14 @@ module CEF
 
   def self.build_dir
     "#{self.dir}/build"
+  end
+
+  def self.x86?
+    dir.end_with?('32')
+  end
+
+  def self.x86_64?
+    dir.end_with?('64')
   end
 end
 
@@ -19,37 +27,34 @@ namespace :cef do
 end
 
 if OS.mac?
+
   def build_cef_target(target, configuration)
     mkdir CEF.build_dir unless Dir.exists?(CEF.build_dir)
+    arch = CEF.x86? ? 'x86' : 'x86_64'
     cd CEF.build_dir do
-      if CEF.dir.end_with?('64')
-        sh("cmake -G \"Xcode\" -DPROJECT_ARCH=\"x86_64\" #{CEF.dir}")
-      else
-        sh("cmake -G \"Xcode\" -DPROJECT_ARCH=\"x86\" #{CEF.dir}")
-      end
+      sh("cmake -G \"Xcode\" -DPROJECT_ARCH=\"#{arch}\" #{CEF.dir}")
       sh("xcodebuild -project cef.xcodeproj -target #{target} -configuration #{configuration}")
     end
   end
+
 elsif OS.linux?
+
   def build_cef_target(target, configuration)
     mkdir CEF.build_dir unless Dir.exists?(CEF.build_dir)
     cd CEF.build_dir do
-      if CEF.dir.end_with?('64')
-        sh("cmake -DPROJECT_ARCH=\"x86_64\" #{CEF.dir} -DCONFIGURATION=#{configuration}")
-      else
-        sh("cmake -DPROJECT_ARCH=\"x86\" #{CEF.dir} -DCONFIGURATION=#{configuration}")
-      end
+      arch = CEF.x86? ? 'x86' : 'x86_64'
+      sh("cmake -DPROJECT_ARCH=\"#{arch}\" #{CEF.dir} -DCONFIGURATION=#{configuration}")
       sh("make")
     end
   end
+
 else
+
   def build_cef_target(target, configuration)
     cd CEF.dir do
-      if CEF.dir.end_with?('64')
-        sh("msbuild cefclient2010.sln /property:Configuration=Release /property:Platform=X64")
-      else
-        sh("msbuild cefclient2010.sln /property:Configuration=Release /property:Platform=X86")
-      end
+      platform = CEF.x86? ? 'X86' : 'X64'
+      sh("msbuild cefclient2010.sln /property:Configuration=Release /property:Platform=#{platform}")
     end
   end
+
 end
