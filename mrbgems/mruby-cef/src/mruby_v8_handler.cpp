@@ -27,10 +27,6 @@ MRubyV8Handler::Execute(const CefString& name,
     int argc = arguments.size();
     mrb_value* argv = (mrb_value*)malloc(sizeof(mrb_value) * argc);
 
-    // for (auto it = arguments.begin(); it != arguments.end(); ++it) {
-    //   mrb_ary_push(mrb, rb_args, mruby_box_cef_v8_value_ref(mrb, *it));
-    // }
-
     for (int i = 0; i < argc; i++) {
       argv[i] = mruby_box_cef_v8_value_ref(mrb, arguments.at(i));
     }

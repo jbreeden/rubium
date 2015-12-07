@@ -93,7 +93,7 @@ class JS::Value
         end
       else
         # If a block was supplied, pass it as a function in the last argument to the called function
-        func = JS.create_function 'anonymous' do |args|
+        func = JS.function do |args|
           block[*args]
         end
         args.push(func)

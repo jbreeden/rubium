@@ -12,6 +12,12 @@ if (js.get() == NULL) { \
   return mrb_nil_value(); \
 }
 
+#define ASSERT_IS_JS_VALUE(val, msg) \
+if (!mrb_obj_is_kind_of(mrb, val, JSValue_class(mrb))) { \
+  mrb_raise(mrb, mrb->eStandardError_class, msg); \
+  return mrb_nil_value(); \
+}
+
 void free_cef_ref_ptr_to_v8_value(mrb_state* mrb, void* ptr) {
   /*
    * The destructor of the CefRefPtr will decrement V8's ref count on the
@@ -254,8 +260,11 @@ mrb_cef_v8_js_object_apply(mrb_state* mrb, mrb_value self) {
    int argc;
    mrb_get_args(mrb, "oa&", &context, &args, &argc, &block);
 
+   ASSERT_IS_JS_VALUE(context, "JS::Value#apply expects a JS::Value as the first argument");
+
    CefV8ValueList js_args;
    for (int i = 0; i < argc; ++i) {
+      ASSERT_IS_JS_VALUE(args[i], "JS::Value#apply expects an array of JS::Value objects as the second argument");
       js_args.push_back(
         // TODO: May not be a Value. Need error checking
         mruby_unbox_cef_v8_value_ref(mrb, *(args + i))
@@ -263,30 +272,25 @@ mrb_cef_v8_js_object_apply(mrb_state* mrb, mrb_value self) {
    }
 
    CefRefPtr<CefV8Value> js_context = mruby_unbox_cef_v8_value_ref(mrb, context);
-
-   // TODO: May not be a function. Need error checking
    CefRefPtr<CefV8Value> js_fn = mruby_unbox_cef_v8_value_ref(mrb, self);
 
-   if (mrb_test(block)) {
-      js_fn->SetRethrowExceptions(false);
-   }
-   else {
-      js_fn->SetRethrowExceptions(true);
+   if (!js_fn->IsFunction()) {
+     mrb_raise(mrb, mrb->eStandardError_class, "JS::Value#apply is only valid for functions");
+     return mrb_nil_value();
    }
 
+   js_fn->SetRethrowExceptions(false);
    CefRefPtr<CefV8Value> result = js_fn->ExecuteFunction(js_context, js_args);
-   mrb_value rb_return_value;
 
-   if (js_fn->HasException() && mrb_test(block)) {
+   if (js_fn->HasException()) {
       mrb_value wrapped_exception = mruby_box_cef_v8_exception_ref(mrb, js_fn->GetException());
-      rb_return_value = mrb_funcall(mrb, block, "call", 1, wrapped_exception);
       js_fn->ClearException();
+      mrb_exc_raise(mrb, wrapped_exception);
+      return mrb_nil_value();
    }
    else {
-      rb_return_value = mruby_box_cef_v8_value_ref(mrb, result);
+      return mruby_box_cef_v8_value_ref(mrb, result);
    }
-
-   return rb_return_value;
 }
 
 #ifdef __cplusplus
