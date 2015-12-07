@@ -14,6 +14,14 @@ It provides a Chromium shell for your application's UI, letting you develop your
 UI like a web app, while also giving you access to the underlying system like a
 native app.
 
+Demo
+----
+
+Here is an example rubium app I call mruby-edit. It's a code editor written entirely in Ruby - including all DOM event handlers and manipulations. It's implemented on top of [Ace](https://ace.c9.io/#nav=about), and uses Ruby code to configure
+Ace keybindings, and access the file system. In the image, mruby-edit is viewing its own source code.
+
+![demo](/screenshot.png)
+
 Usage
 -----
 
