@@ -22,6 +22,13 @@ Ace keybindings, and access the file system. In the image, mruby-edit is viewing
 
 ![demo](/screenshot.png)
 
+Mruby-edit was written entirely in Ruby as a proof of concept, but you can freely switch between Ruby and JavaScript
+for your application. You may only want to use Ruby to access system resources, leaving the rest of the work in
+JavaScript. This is possible using the `JS` module, which allows you to create JavaScript objects, call JavaScript
+functions, or extend JavaScript with methods written in Ruby.
+
+To see how this API works, run the `javascript_interop` sample after building rubium.
+
 Usage
 -----
 
