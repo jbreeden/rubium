@@ -12,8 +12,6 @@ sudo ln -s /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
 Rubium uses the mruby-apr gem, which depends on APR, so we'll build that.
 (It doesn't matter where you do the building, as long as you let make install to the default dir)
 ```
-mkdir apr
-cd apr
 wget http://apache.arvixe.com//apr/apr-1.5.2.tar.gz
 tar xfz apr-1.5.2.tar.gz
 cd apr-1.5.2
