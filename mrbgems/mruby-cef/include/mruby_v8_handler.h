@@ -12,6 +12,7 @@ public:
    mrb_value block;
 
    MRubyV8Handler(mrb_state* mrb, std::string name, mrb_value block);
+   ~MRubyV8Handler();
 
    virtual bool Execute(const CefString& name,
       CefRefPtr<CefV8Value> object,

@@ -13,7 +13,12 @@ RubiumRenderProcessHandler::RubiumRenderProcessHandler() {}
 
 void RubiumRenderProcessHandler::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) {
   mrb_state* mrb = mrb_for_thread();
-  mrb_funcall(mrb, mrb_obj_value(mrb->kernel_module), "define_ruby_js_function", 0);
+  mrb_funcall(mrb, mrb_obj_value(mrb->kernel_module), "define_ruby_function", 0);
+  if (mrb->exc) {
+     char* exception = mrb_str_to_cstr(mrb, mrb_funcall(mrb, mrb_obj_value(mrb->exc), "to_s", 0));
+     LAMINA_LOG("ERROR: Failed to define ruby function: " << exception);
+     mrb->exc = NULL;
+  }
 
   mrb_value content_script = mrb_load_string(mrb, "ENV['CONTENT_SCRIPT']");
   if (!mrb_nil_p(content_script)) {

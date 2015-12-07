@@ -37,7 +37,9 @@ class MrubyEditor::View
     @minimizeOutputButton = @container.querySelector('.minimize-output')
     @maximizeOutputButton = @container.querySelector('.maximize-output')
     style = JS.document.createElement('style')
-    style.textContent = CSS_FORMAT % { selector: selector }
+
+    style.textContent = CSS_FORMAT % { selector: selector.to_s }
+
     JS.document.head.appendChild(style)
     # Temporary (probably)
     JS.window.editor = @editor

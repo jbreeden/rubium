@@ -95,7 +95,6 @@ class MrubyEditor
   end
 
   def insert(text)
-    puts @editor.class
     each_cursor { @editor.insert(text) }
   end
 

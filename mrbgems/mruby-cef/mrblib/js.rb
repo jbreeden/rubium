@@ -1,7 +1,5 @@
-JS = Cef::V8
-
 module JS
-  class << JS
+  class << self
     alias legacy_eval eval
     def eval(str)
       legacy_eval(str) do |exc|
@@ -48,20 +46,12 @@ module JS
     JS.window[:localStorage]
   end
 
-  def self.function(&block)
-    raise "Must supply a block to JS.function" unless block
-    JS.create_function("anonymous") do |args|
-      JS.arguments = args
-      block[*args]
-    end
-  end
-
   def self.method_missing(name, *args, &block)
     JS.window.send(name, *args, &block)
   end
 end
 
-class JS::JsObject
+class JS::Value
   def to_s
     # NOPE: Remember, primitives are not really objects in JS.
     #       When you do `"some string literal".toString()` JS creates a temporary `String`
@@ -82,7 +72,7 @@ class JS::JsObject
 
     # We're calling a JS function from Ruby, so convert the arguments if possible
     args = args.map { |arg|
-      if arg.kind_of? JsObject
+      if arg.kind_of? Value
         arg
       else
         arg.to_js
@@ -104,7 +94,6 @@ class JS::JsObject
       else
         # If a block was supplied, pass it as a function in the last argument to the called function
         func = JS.create_function 'anonymous' do |args|
-          JS.arguments = args
           block[*args]
         end
         args.push(func)
@@ -125,7 +114,7 @@ end
 
 class Object
   def to_js
-    raise "No implicit conversion of #{self.class.to_s} to JsObject"
+    raise "No implicit conversion of #{self.class.to_s} to Value"
   end
 end
 
@@ -172,6 +161,8 @@ class Symbol
 end
 
 class Array
+  # TODO: Detect & resolve reference cycles when converting
+  #       Ex: Array has an element that references the array.
   def to_js
     result = JS.eval('[]')
     self.each do |el|
@@ -191,20 +182,30 @@ class Hash
   end
 end
 
-def define_ruby_js_function
-  ruby = JS.create_function 'ruby' do |args|
-    result = eval(args[0].string_value)
+def define_ruby_function
+  ruby = JS.create_function 'ruby' do |script|
+    result = Kernel.eval(script.to_s, nil, "(ruby)", 0)
+
     begin
-      # TODO: Detect & resolve reference cycles when converting
-      #       Ex: Array has an element that references itself.
-      result = result.kind_of?(JS::JsObject) ? result : result.to_js
+      result_as_js = JS.create_undefined
+
+      if result.kind_of?(JS::Value)
+        result_as_js = result
+      elsif result.respond_to?(:to_js)
+        converted = result.to_js
+        if converted.kind_of?(JS::Value)
+          result_as_js = converted
+        else
+          $stderr.puts("WARNING: Object's to_js function doesn't return a JS::Value - #{converted}")
+        end
+      else
+        $stderr.puts("WARNING: `ruby` return value could not be converted to a JS object - #{result}")
+      end
     rescue Exception => ex
-      # Couldn't convert return value to JsObject. Just return undefined.
-      # (Note that everything in Ruby returns something, so this may be unintential - not an error)
-      JS.console.warn("Failed to convert return value to JavaScript object: #{result.to_s}")
-      result = JS.create_undefined
+      $stderr.puts("Error converting object to JavaScript Value: #{ex}")
+      raise ex
     end
-    result
+    result_as_js
   end
 
   JS.window.ruby = ruby

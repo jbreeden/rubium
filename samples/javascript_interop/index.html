@@ -121,27 +121,38 @@ JS.create_string JS.type_of(js_obj)
 <test-case>
 # Reading values from JavaScript objects into
 # their equivalient types in Ruby.
-# (Then converting to JavaScript strings to have
-#  something to report in the result column)
 
 js_obj = JS.eval "true"
-JS.create_string js_obj.bool_value.to_s
+js_obj.bool_value
 </test-case>
 <test-case>
 js_obj = JS.eval "false"
-JS.create_string js_obj.bool_value.to_s
+js_obj.bool_value
 </test-case>
 <test-case>
 js_obj = JS.eval "1"
-JS.create_string js_obj.int_value.to_s
+js_obj.int_value
 </test-case>
 <test-case>
 js_obj = JS.eval "1.5"
-JS.create_string js_obj.double_value.to_s
+js_obj.double_value
 </test-case>
 <test-case>
 js_obj = JS.eval "'test'"
-JS.create_string js_obj.string_value
+js_obj.string_value
+</test-case>
+<test-case>
+# `string_value` will return an empty
+# string if called on a non-string value
+js_obj = JS.eval "1"
+js_obj.string_value
+</test-case>
+<test-case>
+# If you just want a string representation
+# of whatever object you have, use to_s
+int = JS.eval "1"
+str = JS.create_string "test"
+[int.to_s, str.to_s]
 </test-case>
 
 <!-- JS.eval -->
@@ -155,8 +166,10 @@ JS.eval "'String created by JS.eval'"
 <!-- Exposing Ruby functions to JavaScript -->
 
 <test-case>
-# User V8.create_function NAME, BLOCK
-# to create JavaScript functions from Ruby
+# User V8.create_function(name="(anonymous)", &block)
+# to create JavaScript functions from Ruby.
+# This function is so named to match the C++ API,
+# but aliased as "function" for brevity.
 
 # `ls` gives JavaScript access to file system info.
 JS.create_function "ls" do |args|
@@ -175,15 +188,9 @@ end
 # In this example, we make a global function by assigning
 # `strip` as a function property on `window`
 
-# Note that arguments to the function are passed as an array,
-# (`args` in this case). This matches the functionality of
-# the `arguments` object in JavaScript (everything is optional,
-# and it's up to the function to check args and throw errors).
-
-JS.window[:strip] =
-  JS.create_function 'strip' do |args|
-    JS.create_string args[0].string_value.strip
-  end
+JS.window[:strip] = JS.function do |str|
+  JS.create_string str.string_value.strip
+end
 
 JS.eval "strip('     Strip my whitespace, please!       ')"
 </test-case>
@@ -192,7 +199,7 @@ JS.eval "strip('     Strip my whitespace, please!       ')"
 # Any unhandled exceptions in Ruby will be rethrown
 # as Error's to the calling JavaScript
 
-JS.create_function 'raise' do |args|
+JS.function 'raise' do |args|
   # Should cause a javascript exception
   raise 'my error'
 end
@@ -234,8 +241,7 @@ end
 #   is any possibility of an exception, provid a block
 #   to `apply` and check for the error.
 
-JS.window[:rbDontCatch] =
-JS.create_function "rbDontCatch" do |args|
+JS.window[:rbDontCatch] = JS.function do |args|
   JS.window[:throws].apply(JS.window, [])
 end
 </test-case>
@@ -245,7 +251,7 @@ end
 # message. If this is uncaught by any rescue blocks, it
 # will be thrown again to the calling JavaScript.
 
-JS.create_function "rbRethrow" do |args|
+JS.function do |args|
   JS.window[:throws].apply(JS.window, []) do |exc|
     raise exc.message
   end
@@ -258,7 +264,7 @@ end
 # a ruby exception to be handled in a `rescue` block
 # (Note: this is the behavior of the method_missing API)
 
-JS.create_function "rbRecatch" do |args|
+JS.function do |args|
   begin
     JS.window[:throws].apply(JS.window, []) do |exc|
       raise exc.message
@@ -297,6 +303,7 @@ end
     var result;
     try {
       result = ruby(code);
+      console.log(result);
     } catch (ex) {
       result = ex.toString();
     }
@@ -333,7 +340,6 @@ end
 
   var tests = Array.prototype.slice.call(document.querySelectorAll("test-case"));
   tests.forEach(function(testCase){
-    // \s\S is a hack to match any character (. does not match newlines)
     var code = testCase.textContent;
     test(code);
   });

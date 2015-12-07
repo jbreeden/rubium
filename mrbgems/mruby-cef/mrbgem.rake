@@ -5,7 +5,6 @@ MRuby::Gem::Specification.new('mruby-cef') do |spec|
   spec.author  = 'Jared Breeden'
   spec.summary = 'Bindings to the CEF libraries'
 
-  spec.cc.flags << [ '-std=c11' ]
   spec.cxx.flags << [ '-std=c++11' ]
   if ENV['CEF_HOME']
     spec.cc.include_paths << ENV['CEF_HOME']
