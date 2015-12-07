@@ -71,12 +71,9 @@ mrb_cef_v8_value_get_bool_value(mrb_state *mrb, mrb_value self) {
 //>
 static mrb_value
 mrb_cef_v8_value_get_int_value(mrb_state *mrb, mrb_value self) {
-   CefRefPtr<CefV8Value> js = mruby_unbox_cef_v8_value_ref(mrb, self);
-   mrb_value rb;
-   ASSERT_JS_NOT_NULL(js);
-
-   SET_INT_VALUE(rb, js->GetIntValue());
-   return rb;
+  CefRefPtr<CefV8Value> js = mruby_unbox_cef_v8_value_ref(mrb, self);
+  ASSERT_JS_NOT_NULL(js);
+  return mrb_fixnum_value(js->GetIntValue());
 }
 
 //<
@@ -85,11 +82,9 @@ mrb_cef_v8_value_get_int_value(mrb_state *mrb, mrb_value self) {
 //>
 static mrb_value
 mrb_cef_v8_value_get_double_value(mrb_state *mrb, mrb_value self) {
-   CefRefPtr<CefV8Value> js = mruby_unbox_cef_v8_value_ref(mrb, self);
-   mrb_value rb;
-   ASSERT_JS_NOT_NULL(js);
-   SET_FLOAT_VALUE(MRB, rb, js->GetDoubleValue());
-   return rb;
+  CefRefPtr<CefV8Value> js = mruby_unbox_cef_v8_value_ref(mrb, self);
+  ASSERT_JS_NOT_NULL(js);
+  return mrb_float_value(mrb, js->GetDoubleValue());
 }
 
 //<
@@ -256,9 +251,8 @@ mrb_value
 mrb_cef_v8_js_object_apply(mrb_state* mrb, mrb_value self) {
    mrb_value context;
    mrb_value* args;
-   mrb_value block;
    int argc;
-   mrb_get_args(mrb, "oa&", &context, &args, &argc, &block);
+   mrb_get_args(mrb, "oa", &context, &args, &argc);
 
    ASSERT_IS_JS_VALUE(context, "JS::Value#apply expects a JS::Value as the first argument");
 

@@ -23,7 +23,7 @@ void RubiumRenderProcessHandler::OnContextCreated(CefRefPtr<CefBrowser> browser,
   mrb_value content_script = mrb_load_string(mrb, "ENV['CONTENT_SCRIPT']");
   if (!mrb_nil_p(content_script)) {
     const char * native_content_script = mrb_string_value_cstr(mrb, &content_script);
-    LAMINA_LOG("Attempting to load content script: " << native_content_script);
+    // LAMINA_LOG("Attempting to load content script: " << native_content_script);
     FILE* script_file = fopen(native_content_script, "r");
     if (script_file == NULL) {
       LAMINA_LOG("ERROR: Could not open content script: " << native_content_script);

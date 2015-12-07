@@ -112,7 +112,7 @@ js_obj = JS.eval "(function () {})"
 JS.create_string JS.type_of(js_obj)
 </test-case>
 <test-case>
-js_obj = JS.eval "{}"
+js_obj = JS.eval('obj = {}')
 JS.create_string JS.type_of(js_obj)
 </test-case>
 
@@ -201,87 +201,71 @@ JS.eval "strip('     Strip my whitespace, please!       ')"
 
 JS.function 'raise' do |args|
   # Should cause a javascript exception
-  raise 'my error'
+  raise 'error from ruby'
 end
 </test-case>
 
 <test-case>
 # Call JavaScript functions from Ruby with `apply`
 # Signature: `jsFunction.apply(context, args_array)`
-# Always provide a block to apply catches any exceptions
+# Exceptions are raised in ruby as usual
 
 JS.eval "function throws() { " +
 "   throw 'Exception from `throws()`'; " +
 "}"
 
-JS.window[:throws].apply(JS.window, []) do |exc|
-  JS.create_string "Block received exception: #{exc}"
+begin
+  JS.window[:throws].apply(JS.window, [])
+rescue JS::Exception => ex
+  "JavaScript threw: #{ex}"
 end
 </test-case>
 
 <test-case>
-# Or use the "method_missing" API to call JS
-# functions like normal ruby methods. In this case,
-# any JavaScript exceptions will be thrown as Ruby
-# exceptionss
+# JS::Value implements method missing and delegates
+# to the underlying object like you'd expect.
+# You can use this API to get/set properties, or to call
+# functions.
+#
+# Note: if you want to get a reference to a function
+# without calling it, use JS::Value#[]
+#
+#   ex: `alert_fn = JS.window[:alert]`
+#
+# Later you can call it with apply
+#
+#   ex: `alert_fn.apply(JS.window, JS.create_string("Hey!"))`
 
 begin
   JS.window.throws
 rescue Exception => exc
-  JS.create_string "Ruby caught: #{exc}"
+  "JavaScript threw: #{exc}"
 end
 </test-case>
 
 <test-case>
-# Calling a JavaScript function that throws without a block
-# will allow the exception to rise to the calling JavaScript
-# NOTE:
-#   Your Ruby extension should bail out if a JavaScript
-#   call throws and the exception isn't handled. If there
-#   is any possibility of an exception, provid a block
-#   to `apply` and check for the error.
-
-JS.window[:rbDontCatch] = JS.function do |args|
-  JS.window[:throws].apply(JS.window, [])
-end
+js_obj = JS.eval('obj = { x: 1, y: 2 }')
+js_obj.y = 3
+{x: js_obj.x, y: js_obj.y}
 </test-case>
 
 <test-case>
-# If you catch a JavaScript exception, you can raise the
-# message. If this is uncaught by any rescue blocks, it
-# will be thrown again to the calling JavaScript.
-
-JS.function do |args|
-  JS.window[:throws].apply(JS.window, []) do |exc|
-    raise exc.message
-  end
-end
-</test-case>
-
-<test-case>
-# It is possible to catch a JavaScript exception via the
-# block provided to `apply`, and then rethrow it as
-# a ruby exception to be handled in a `rescue` block
-# (Note: this is the behavior of the method_missing API)
+# JS::Exception objects are subclassed from
+# Ruby's StandardError, and have a `message` property
 
 JS.function do |args|
   begin
-    JS.window[:throws].apply(JS.window, []) do |exc|
-      raise exc.message
-    end
+    JS.window[:throws].apply(JS.window, [])
     JS.create_string "FAILED: Should throw over this line"
-  rescue Exception => ex
-    JS.create_string "Re-threw exception: #{ex.message}"
+  rescue JS::Exception => ex
+    JS.create_string "JavaScript threw: #{ex.message}"
   end
 end
 </test-case>
 
 <test-case>
-# JS.eval behaves the same way as the method_missing API
-# for calling JS functions. Any exceptions are re-raised
-# as Ruby exceptions. If you don't catch the and the call
-# stack unwinds to a JavaScript frame again, the Exception
-# will be re-thrown as a JavaScript exception. And so on...
+# Eval will raise JavaScript exceptions in Ruby as well.
+# (Note that CEF may prepend "Uncaught" to the message)
 
 begin
   JS.eval("throw 'test'")
