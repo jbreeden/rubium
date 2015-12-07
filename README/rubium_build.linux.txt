@@ -26,11 +26,17 @@ cd ./rubium
 git submodule init
 git submodule update
 
-mkdir cef_distros
 # Manual Step! 
 # - CEF doesn't distribute to robots. 
 # - I should probably mirror the correct version (if allowed) so the download can be scripted.
-# Download CEF binary distribution cef_binary_3.2171.1979_linux64 and extract to ./cef_distros/cef_binary_3.2171.1979_linux64
+# Download CEF's binary distribution and extract it into the rubium folder.
+# (Rubium will glob for cef_binary* and use the last one it finds, which should be the highest version
+#  you have made available.)
+
 rake cef:cefclient
+
+# If you're building on 32-bit linux, and get complaints about off64_t being undefined,
+# change this to `rake mruby:build CFLAGS="-D_LARGEFILE64_SOURCE"`
 rake mruby:build
+
 rake package
