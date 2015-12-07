@@ -1,7 +1,9 @@
 - Activate 64bit vcvars. Something like C:/Program Files x86/Microsoft Visual Studio 12.0/..../ `vcvarsall x64`
 - Build APR. Need to download win32 source, run cmake to generate vsproj files. Open the solution & create a 64bit build target, build apr-1 project
 - APR_DECLARE_STATIC is defined in the mrbgem.rake file, so the static library may be linked to.
-- Download the CEF binary distribution
+- Download the CEF binary distribution and extract it into the rubium folder
+  + Rubium will find whichever CEF version you make available. Make sure you download the right version for your system
+    (32bit vs 64bit), and prefer the latest CEF.
 - Build cefclient project
 - run `rake mruby:build && rake package`
   + Right now apr is expected in RUBIUM_REPO/apr_source/apr-1.5.2 and project files should be created in RUBIUM_REPO/apr_source/apr-1.5.2/build with cmake
