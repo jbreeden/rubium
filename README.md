@@ -1,6 +1,8 @@
 Rubium (alpha)
 ==============
 
+[![Join the chat at https://gitter.im/jbreeden/rubium](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbreeden/rubium?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 A framework for developing desktop apps with web technologies.
 
 &#x2713; Ruby <br/>
