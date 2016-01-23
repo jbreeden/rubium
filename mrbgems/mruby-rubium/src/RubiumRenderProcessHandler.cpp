@@ -19,7 +19,9 @@ RubiumRenderProcessHandler::OnContextCreated(
     CefRefPtr<CefBrowser> browser,
     CefRefPtr<CefFrame> frame,
     CefRefPtr<CefV8Context> context) {
+  // printf("Context Created\n");
   if (!context->IsValid()) return;
+  // printf("Valid Context Created\n");
   
   mrb_state* mrb = mrb_lookup.open(frame->GetIdentifier());
   
@@ -81,6 +83,7 @@ RubiumRenderProcessHandler::OnContextCreated(
       }
     }
   }
+  // printf("End Context created\n");
 }
 
 void
@@ -88,6 +91,9 @@ RubiumRenderProcessHandler::OnContextReleased(
     CefRefPtr<CefBrowser> browser,
     CefRefPtr<CefFrame> frame,
     CefRefPtr<CefV8Context> context) {
+  // printf("Context Released\n");  
   if (!context->IsValid()) return;
+  // printf("Valid Context Released\n");
   mrb_lookup.close(frame->GetIdentifier());
+  // printf("End Context Released\n");
 }

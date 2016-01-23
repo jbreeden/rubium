@@ -38,7 +38,8 @@ mrb_value mruby_box_cef_v8_value_ref(mrb_state* mrb, CefRefPtr<CefV8Value> ref) 
    CefRefPtr<CefV8Value>* ptr = new CefRefPtr<CefV8Value>();
    *ptr = ref;
    RData* data = mrb_data_object_alloc(mrb, JSValue_class(mrb), ptr, &cef_ref_ptr_to_v8_value_type);
-   return mrb_obj_value(data);
+   mrb_value result = mrb_obj_value(data);
+   return result;
 }
 
 CefRefPtr<CefV8Value>

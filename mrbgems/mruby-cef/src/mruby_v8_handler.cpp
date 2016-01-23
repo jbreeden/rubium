@@ -30,7 +30,7 @@ MRubyV8Handler::Execute(const CefString& name,
   const CefV8ValueList& arguments,
   CefRefPtr<CefV8Value>& retval,
   CefString& exception) {
-
+    
   if (name == this->name) {
     int argc = arguments.size();
     mrb_value* argv = (mrb_value*)malloc(sizeof(mrb_value) * argc);

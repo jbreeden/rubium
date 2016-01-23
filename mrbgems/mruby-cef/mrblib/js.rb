@@ -187,8 +187,9 @@ end
 # So, define this as a function to be called from the RenderProcessHandler
 def define_ruby_function
   ruby = JS.create_function 'ruby' do |script|
+    puts %Q{eval "#{script.to_s.split("\n").map { |s| s.strip.gsub("\"", "\\\"") }.join("; ")}"}
     result = Kernel.eval(script.to_s, nil, "(ruby)", 0)
-
+    result = result[]
     begin
       result_as_js = JS.create_undefined
 
