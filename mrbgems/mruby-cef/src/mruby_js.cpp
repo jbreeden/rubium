@@ -128,7 +128,7 @@ mrb_cef_v8_create_function(mrb_state *mrb, mrb_value self) {
 
 //<
 // ### `::window`
-// - Returns the global `window` object fromt the current V8 context
+// - Returns the global `window` object from the current V8 context
 //>
 static mrb_value
 mrb_cef_v8_get_window(mrb_state* mrb, mrb_value self) {

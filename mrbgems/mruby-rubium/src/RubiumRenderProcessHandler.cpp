@@ -4,15 +4,25 @@
 #include "stdio.h"
 #include "errno.h"
 #include "mruby.h"
+#include "mrb_lookup.h"
 #include "mruby_rubium.h"
 #include "mruby/compile.h"
 #include "mruby_cef.h"
 #include "RubiumRenderProcessHandler.h"
 
+static MrbLookup mrb_lookup;
+
 RubiumRenderProcessHandler::RubiumRenderProcessHandler() {}
 
-void RubiumRenderProcessHandler::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) {
-  mrb_state* mrb = mrb_for_thread();
+void
+RubiumRenderProcessHandler::OnContextCreated(
+    CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefFrame> frame,
+    CefRefPtr<CefV8Context> context) {
+  if (!context->IsValid()) return;
+  
+  mrb_state* mrb = mrb_lookup.open(frame->GetIdentifier());
+  
   mrb_funcall(mrb, mrb_obj_value(mrb->kernel_module), "define_ruby_function", 0);
   if (mrb->exc) {
      char* exception = mrb_str_to_cstr(mrb, mrb_funcall(mrb, mrb_obj_value(mrb->exc), "to_s", 0));
@@ -71,4 +81,13 @@ void RubiumRenderProcessHandler::OnContextCreated(CefRefPtr<CefBrowser> browser,
       }
     }
   }
+}
+
+void
+RubiumRenderProcessHandler::OnContextReleased(
+    CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefFrame> frame,
+    CefRefPtr<CefV8Context> context) {
+  if (!context->IsValid()) return;
+  mrb_lookup.close(frame->GetIdentifier());
 }

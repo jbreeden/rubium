@@ -182,6 +182,9 @@ class Hash
   end
 end
 
+# Can't access the JS window to define the `ruby` function until
+# we're *in* a JavaScript context (on a thread with a frame created, etc.)
+# So, define this as a function to be called from the RenderProcessHandler
 def define_ruby_function
   ruby = JS.create_function 'ruby' do |script|
     result = Kernel.eval(script.to_s, nil, "(ruby)", 0)

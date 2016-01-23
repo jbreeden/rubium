@@ -13,7 +13,15 @@ MRubyV8Handler::MRubyV8Handler(mrb_state* mrb, string name, mrb_value block) {
 }
 
 MRubyV8Handler::~MRubyV8Handler() {
-  mrb_gc_unregister(this->mrb, this->block);
+  CefRefPtr<CefV8Context> context = CefV8Context::GetCurrentContext();
+  /* The context will be NULL or invalid when the process is closing.
+   * In that case, the mrb_state has been freed, so do not attempt to use it.
+   * (No need to unregister from gc root anyway, as all objects will have been
+   *  freed as well.)
+   */
+  if (context != NULL && context->IsValid()) {
+    mrb_gc_unregister(this->mrb, this->block);
+  }
 }
 
 bool

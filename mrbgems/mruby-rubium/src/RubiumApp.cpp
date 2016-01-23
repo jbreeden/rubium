@@ -21,8 +21,6 @@ CefRefPtr<CefRenderProcessHandler> RubiumApp::GetRenderProcessHandler(){
 }
 
 void RubiumApp::OnContextInitialized() {
-  cout << "Browser Context Created!" << std::endl;
-
    // Information used when creating the native window.
    CefWindowInfo window_info;
 
