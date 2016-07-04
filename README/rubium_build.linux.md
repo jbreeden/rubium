@@ -35,7 +35,7 @@ git submodule update
 _Manual Step!_
 - CEF doesn't distribute to robots. 
 - I should probably mirror the correct version (if allowed) so the download can be scripted.
-Download CEF's binary distribution and extract it into the rubium folder.
+[Download](https://bitbucket.org/chromiumembedded/cef) CEF's binary distribution and extract it into the rubium folder.
 (Rubium will glob for cef_binary* and use the last one it finds, which should be the highest version you have made available.)
 
 Now build the cefclient
